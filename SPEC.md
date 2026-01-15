@@ -325,10 +325,10 @@ def create_figure_grid(
 
 ### Faza 1: Setup i infrastruktura
 
-- [ ] **TASK-001**: Utworzenie struktury katalogów projektu
-- [ ] **TASK-002**: Konfiguracja `requirements.txt` i środowiska
-- [ ] **TASK-003**: Utworzenie plików `__init__.py`
-- [ ] **TASK-004**: Konfiguracja pytest
+- [x] **TASK-001**: Utworzenie struktury katalogów projektu
+- [x] **TASK-002**: Konfiguracja `requirements.txt` i środowiska
+- [x] **TASK-003**: Utworzenie plików `__init__.py`
+- [x] **TASK-004**: Konfiguracja pytest
 
 ### Faza 2: Implementacja podstawowych modułów
 
