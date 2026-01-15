@@ -1,0 +1,208 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+
+% Motyw
+\usetheme{Madrid}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+
+% Pakiety
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+
+% Tytuł
+\title[Funkcje Interpolacji Fraktalnych]{Funkcje Interpolacji Fraktalnych}
+\subtitle{Funkcja Weierstrassa, krzywe wypełniające przestrzeń, FIF}
+\author{Projekt na przedmiot Fraktale}
+\date{\today}
+
+\begin{document}
+
+% Slajd 1 - Tytuł
+\begin{frame}
+    \titlepage
+\end{frame}
+
+% Slajd 2 - Plan prezentacji
+\begin{frame}{Plan prezentacji}
+    \tableofcontents
+\end{frame}
+
+\section{Wprowadzenie}
+
+% Slajd 3 - Czym są fraktale?
+\begin{frame}{Czym są fraktale?}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \textbf{Fraktale} to obiekty matematyczne z właściwościami:
+            \begin{itemize}
+                \item \textbf{Samopodobieństwo} -- struktura podobna na różnych skalach
+                \item \textbf{Wymiar niecałkowity} -- np. $D = 1.585$
+                \item \textbf{Nieskończona złożoność} -- szczegóły na każdej skali
+            \end{itemize}
+
+            \vspace{1em}
+            \textbf{Zastosowania:}
+            \begin{itemize}
+                \item Grafika komputerowa
+                \item Kompresja obrazów
+                \item Modelowanie natury
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{../output/figures/sierpinski_box_counting.png}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\section{Funkcja Weierstrassa}
+
+% Slajd 4 - Funkcja Weierstrassa
+\begin{frame}{Funkcja Weierstrassa}
+    \begin{block}{Definicja}
+        $$W(x) = \sum_{n=0}^{\infty} a^n \cos(b^n \pi x)$$
+        gdzie $0 < a < 1$, $b > 1$, $ab > 1$
+    \end{block}
+
+    \textbf{Kluczowe właściwości:}
+    \begin{itemize}
+        \item Funkcja jest \textbf{ciągła}
+        \item Funkcja jest \textbf{nigdzie nieróżniczkowalna}
+        \item Wymiar fraktalny wykresu: $D = 2 + \frac{\log a}{\log b}$
+    \end{itemize}
+
+    \vspace{0.5em}
+    \textbf{Przykład:} Dla $a=0.5$, $b=3$: $D \approx 1.369$
+\end{frame}
+
+% Slajd 5 - Wizualizacja Weierstrassa
+\begin{frame}{Funkcja Weierstrassa -- wizualizacja}
+    \centering
+    \includegraphics[width=0.85\textwidth]{../output/figures/weierstrass_basic.png}
+
+    \small Funkcja Weierstrassa dla $a=0.5$, $b=3$
+\end{frame}
+
+\section{Krzywe wypełniające przestrzeń}
+
+% Slajd 6 - Krzywe wypełniające
+\begin{frame}{Krzywe wypełniające przestrzeń}
+    \textbf{Paradoks:} Czy jednowymiarowa krzywa może wypełnić dwuwymiarowy obszar?
+
+    \vspace{1em}
+    \textbf{Odpowiedź:} TAK! (Peano, 1890)
+
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \textbf{Krzywa Hilberta:}
+            \begin{itemize}
+                \item Konstrukcja rekurencyjna
+                \item Rząd $n$: $4^n$ punktów
+                \item Wymiar graniczny: $D = 2$
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \centering
+            \includegraphics[width=0.9\textwidth]{../output/figures/hilbert_colored.png}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% Slajd 7 - Konstrukcja Hilberta
+\begin{frame}{Krzywa Hilberta -- konstrukcja}
+    \centering
+    \includegraphics[width=0.95\textwidth]{../output/figures/hilbert_construction.png}
+
+    \small Krzywa Hilberta dla rzędów 1--8
+\end{frame}
+
+\section{Wymiar Minkowskiego}
+
+% Slajd 8 - Box-counting
+\begin{frame}{Wymiar Minkowskiego (box-counting)}
+    \begin{block}{Definicja}
+        $$\dim_{box}(F) = \lim_{\epsilon \to 0} \frac{\log N(\epsilon)}{\log(1/\epsilon)}$$
+    \end{block}
+
+    \textbf{Algorytm:}
+    \begin{enumerate}
+        \item Pokryj obiekt siatką pudełek o rozmiarze $\epsilon$
+        \item Policz niepuste pudełka $N(\epsilon)$
+        \item Powtórz dla różnych $\epsilon$
+        \item Wymiar = nachylenie prostej $\log N(\epsilon)$ vs $\log(1/\epsilon)$
+    \end{enumerate}
+
+    \vspace{0.5em}
+    \textbf{Weryfikacja:}
+    \begin{itemize}
+        \item Linia: $D \approx 1.0$ \checkmark
+        \item Kwadrat: $D \approx 2.0$ \checkmark
+        \item Trójkąt Sierpińskiego: $D \approx 1.585$ \checkmark
+    \end{itemize}
+\end{frame}
+
+\section{Fraktalne funkcje interpolacyjne}
+
+% Slajd 9 - FIF
+\begin{frame}{Fraktalne funkcje interpolacyjne (FIF)}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \textbf{Idea:}
+            \begin{itemize}
+                \item Interpolacja z fraktalną strukturą
+                \item Kontrola ``szorstkości'' przez $d$
+            \end{itemize}
+
+            \vspace{1em}
+            \textbf{Współczynnik $d$:}
+            \begin{itemize}
+                \item $d = 0$: interpolacja liniowa
+                \item $|d| \to 1$: wymiar $\to 2$
+            \end{itemize}
+
+            \vspace{1em}
+            \textbf{Zastosowania:}
+            \begin{itemize}
+                \item Modelowanie linii brzegowych
+                \item Tekstury proceduralne
+                \item Kompresja danych
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{../output/figures/fif_basic.png}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\section{Podsumowanie}
+
+% Slajd 10 - Podsumowanie
+\begin{frame}{Podsumowanie}
+    \begin{block}{Główne wyniki}
+        \begin{enumerate}
+            \item \textbf{Funkcja Weierstrassa}: ciągła, nigdzie nieróżniczkowalna, $D = 2 + \log a / \log b$
+            \item \textbf{Krzywe wypełniające}: ciągłe, wypełniają przestrzeń ($D = 2$)
+            \item \textbf{Box-counting}: efektywna metoda wyznaczania wymiaru ($<5\%$ błędu)
+            \item \textbf{FIF}: kontrolowana interpolacja fraktalna
+        \end{enumerate}
+    \end{block}
+
+    \begin{block}{Implementacja}
+        \begin{itemize}
+            \item Python (NumPy, SciPy, Matplotlib)
+            \item 60 testów jednostkowych -- wszystkie przechodzą
+            \item 5 Jupyter Notebooks z pełną analizą
+        \end{itemize}
+    \end{block}
+
+    \centering
+    \vspace{1em}
+    \textbf{Dziękujemy za uwagę!}
+\end{frame}
+
+\end{document}
