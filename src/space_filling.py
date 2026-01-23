@@ -108,43 +108,59 @@ def peano_curve(order: int) -> Tuple[np.ndarray, np.ndarray]:
     if order == 0:
         return np.array([0.5]), np.array([0.5])
 
-    # Użyjemy L-systemu do generowania krzywej Peano
-    # Reguły: L -> LFRFL-F-RFLFR+F+LFRFL
-    #         R -> RFLFR+F+LFRFL-F-RFLFR
+    num_points = 9 ** order
+    x = np.zeros(num_points)
+    y = np.zeros(num_points)
 
-    # Zaczynamy od prostszej implementacji - rekurencyjna konstrukcja
-    n = 3 ** order
-    points = []
+    for i in range(num_points):
+        # t to kopia indeksu do wyciągania "cyfr" w systemie dziewiątkowym (3x3)
+        t = i
+        px, py = 0, 0
+        
+        # Stany odbicia lustrzanego (False = brak, True = odbicie)
+        # To klucz do ciągłości krzywej Peano
+        flip_x = False
+        flip_y = False
 
-    def peano_recursive(x0, y0, ax, ay, bx, by, depth):
-        """Rekurencyjna konstrukcja krzywej Peano."""
-        if depth == 0:
-            points.append((x0 + (ax + bx) / 2, y0 + (ay + by) / 2))
-            return
+        # Przetwarzamy od najwyższego poziomu (największe kwadraty) do najniższego
+        for level in range(order - 1, -1, -1):
+            pow3 = 3 ** level
+            # Wybieramy jeden z 9 kwadratów w aktualnej skali
+            digit = t // (9 ** level)
+            t %= (9 ** level)
 
-        # Dzielimy na 9 części
-        ax3, ay3 = ax / 3, ay / 3
-        bx3, by3 = bx / 3, by / 3
+            # Mapujemy digit (0-8) na bazowe współrzędne (r, c) w siatce 3x3 
+            # stosując "zygzak" (snake order):
+            # 0 1 2  (wiersz 0, w lewo -> prawo)
+            # 5 4 3  (wiersz 1, prawo -> lewo)
+            # 6 7 8  (wiersz 2, w lewo -> prawo)
+            r_raw = digit // 3
+            c_raw = digit % 3
+            if r_raw == 1:
+                c_raw = 2 - c_raw
 
-        # Kolejność przechodzenia przez 9 kwadratów
-        peano_recursive(x0, y0, ax3, ay3, bx3, by3, depth - 1)
-        peano_recursive(x0 + ax3, y0 + ay3, ax3, ay3, bx3, by3, depth - 1)
-        peano_recursive(x0 + 2 * ax3, y0 + 2 * ay3, ax3, ay3, bx3, by3, depth - 1)
+            # Nakładamy aktualne skumulowane odbicia lustrzane z wyższych poziomów
+            c = (2 - c_raw) if flip_x else c_raw
+            r = (2 - r_raw) if flip_y else r_raw
 
-        peano_recursive(x0 + 2 * ax3 + bx3, y0 + 2 * ay3 + by3, ax3, ay3, -bx3, -by3, depth - 1)
-        peano_recursive(x0 + ax3 + bx3, y0 + ay3 + by3, ax3, ay3, -bx3, -by3, depth - 1)
-        peano_recursive(x0 + bx3, y0 + by3, ax3, ay3, -bx3, -by3, depth - 1)
+            px += c * pow3
+            py += r * pow3
 
-        peano_recursive(x0 + 2 * bx3, y0 + 2 * by3, ax3, ay3, bx3, by3, depth - 1)
-        peano_recursive(x0 + ax3 + 2 * bx3, y0 + ay3 + 2 * by3, ax3, ay3, bx3, by3, depth - 1)
-        peano_recursive(x0 + 2 * ax3 + 2 * bx3, y0 + 2 * ay3 + 2 * by3, ax3, ay3, bx3, by3, depth - 1)
+            # Aktualizujemy stany odbicia dla następnego, głębszego poziomu.
+            # Reguła Peano: odbijamy oś X, jeśli jesteśmy w środkowym wierszu (r_raw=1)
+            # i odbijamy oś Y, jeśli jesteśmy w środkowej kolumnie (c_raw=1).
+            if r_raw == 1:
+                flip_x = not flip_x
+            if c_raw == 1:
+                flip_y = not flip_y
 
-    peano_recursive(0, 0, 1, 0, 0, 1, order)
+        # +0.5 stawia punkt w centrum małego kwadratu
+        x[i] = px + 0.5
+        y[i] = py + 0.5
 
-    x = np.array([p[0] for p in points])
-    y = np.array([p[1] for p in points])
-
-    return x, y
+    # Normalizacja do zakresu [0, 1]
+    max_coord = 3 ** order
+    return x / max_coord, y / max_coord
 
 
 def dragon_curve(order: int) -> Tuple[np.ndarray, np.ndarray]:

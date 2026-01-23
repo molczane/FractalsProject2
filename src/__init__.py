@@ -14,7 +14,7 @@ Użycie:
 """
 
 __version__ = "0.1.0"
-__author__ = "Zespół Projektowy"
+__author__ = "Rafał Filarecki, Ernest Mołczan"
 
 __all__ = [
     "weierstrass",
