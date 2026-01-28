@@ -44,7 +44,7 @@
 \maketitle
 
 \section{Wprowadzenie}
-Celem pracy było zbadanie trzech głównych klas obiektów fraktalnych: funkcji Weierstrassa, krzywych wypełniających przestrzeń oraz fraktalnych funkcji interpolacyjnych generowanych przez układy funkcji iterowanych.
+Celem pracy było zbadanie trzech głównych klas obiektów fraktalnych: funkcji Weierstrassa, krzywych wypełniających przestrzeń oraz fraktalnych funkcji interpolacyjnych generowanych przez układy funkcji iterowanych (IFS), których teoretyczne podstawy opisuje m.in. M. Barnsley \cite{1993IV}.
 
 Szczególną uwagę poświęcono numerycznemu wyznaczaniu wymiaru Minkowskiego metodą box-counting oraz weryfikacji uzyskanych wyników poprzez porównanie z wartościami teoretycznymi. W ramach projektu zaimplementowano również bibliotekę funkcji w języku Python, umożliwiającą generowanie badanych obiektów oraz obliczanie ich wymiarów fraktalnych.
 
@@ -135,7 +135,7 @@ D = 2 + \frac{\log a}{\log b}
 \label{eq:weierstrass_dimension}
 \end{equation}
 
-Ponieważ $0 < a < 1$, logarytm $a$ jest ujemny, co gwarantuje, że wymiar zawiera się w przedziale $(1, 2)$. Formuła ta bezpośrednio wiąże parametry funkcji z jej wymiarem fraktalnym, co czyni funkcję Weierstrassa szczególnie użytecznym narzędziem do badania zależności między strukturą matematyczną a własnościami geometrycznymi.
+Ponieważ $0 < a < 1$, logarytm $a$ jest ujemny, co gwarantuje, że wymiar zawiera się w przedziale $(1, 2)$. Formuła ta bezpośrednio wiąże parametry funkcji z jej wymiarem fraktalnym, co czyni funkcję Weierstrassa szczególnie użytecznym narzędziem do badania zależności między strukturą matematyczną a własnościami geometrycznymi \cite{ca3842d6-39d5-36d5-a58e-699b11810719}.
 
 \subsection{Weryfikacja numeryczna dla parametrów standardowych}
 
@@ -233,7 +233,7 @@ Analiza potwierdza, że wraz ze wzrostem rzędu iteracji wymiar fraktalny wszyst
 
 \subsection{Charakterystyka i modelowanie danych}
 
-Fraktalne funkcje interpolacyjne (FIF) stanowią zaawansowane rozszerzenie klasycznych metod interpolacji liniowej czy wielomianowej. W odróżnieniu od metod tradycyjnych, które dążą do gładkości, FIF generują atraktory systemów funkcji iterowanych (IFS), które przechodzą przez zadane punkty węzłowe, zachowując jednocześnie strukturę samopodobną w dowolnej skali.
+Fraktalne funkcje interpolacyjne (FIF) stanowią zaawansowane rozszerzenie klasycznych metod interpolacji liniowej czy wielomianowej \cite{book, article}. W odróżnieniu od metod tradycyjnych, które dążą do gładkości, FIF generują atraktory systemów funkcji iterowanych (IFS), które przechodzą przez zadane punkty węzłowe, zachowując jednocześnie strukturę samopodobną w dowolnej skali.
 
 Kluczowym parametrem tych funkcji jest współczynnik skalowania pionowego $d$, który kontroluje tzw. szorstkość wykresu. Jak pokazano na rysunku~\ref{fig:fif_modeling}, zmiana $d$ pozwala na płynne przejście od prostej interpolacji liniowej ($d=0$) do wysoce nieregularnych profilów, co znajduje zastosowanie w modelowaniu zjawisk naturalnych, takich jak linie brzegowe czy profile terenu.
 
@@ -255,7 +255,7 @@ Istotną cechą FIF jest ich ścisłe samopodobieństwo. Każdy fragment funkcji
 
 \subsection{Analiza wymiaru i ograniczenia metody box-counting}
 
-Wymiar fraktalny FIF jest ściśle powiązany ze współczynnikami skalowania. Dla prostego przypadku równomiernego podziału, wymiar teoretyczny $D$ rośnie wraz z $|d|$. Jednak analiza numeryczna przeprowadzona metodą box-counting (rysunek~\ref{fig:fif_dim_graph}) ujawnia znaczące rozbieżności – o ile wymiar teoretyczny rośnie, o tyle wynik numeryczny spada.
+Wymiar fraktalny FIF jest ściśle powiązany ze współczynnikami skalowania. Dla prostego przypadku równomiernego podziału, wymiar teoretyczny $D$ rośnie wraz z $|d|$ \cite{RUAN2009187}. Jednak analiza numeryczna przeprowadzona metodą box-counting (rysunek~\ref{fig:fif_dim_graph}) ujawnia znaczące rozbieżności – o ile wymiar teoretyczny rośnie, o tyle wynik numeryczny spada.
 
 \begin{figure}[H]
     \centering
@@ -273,5 +273,34 @@ Nieskuteczność metody box-counting w przypadku FIF o wysokiej szorstkości wyn
 
 \section{Podsumowanie i wnioski}
 Przeprowadzone eksperymenty potwierdziły, że metoda box-counting poprawnie odtwarza teoretyczne trendy zależności wymiaru fraktalnego od parametrów kontrolnych ($a, b, d$). W przypadku krzywych wypełniających przestrzeń zaobserwowano wyraźną zbieżność wymiaru numerycznego do granicznej wartości $D=2$ wraz ze wzrostem rzędu iteracji. Jednocześnie badania ujawniły systematyczne niedoszacowanie wymiaru dla obiektów o wysokiej szorstkości i gęstym upakowaniu oscylacji. Główną przyczyną tych rozbieżności jest skończona rozdzielczość dyskretyzacji oraz ograniczenia zakresu skal $(\varepsilon_{min}, \varepsilon_{max})$, co sprawia, że algorytm w pewnym momencie przestaje dostrzegać ciągłość fraktala, interpretując go jako rozproszony zbiór punktów.
+
+\begin{thebibliography}{9}
+
+\bibitem{ca3842d6-39d5-36d5-a58e-699b11810719}
+B.~R. Hunt.
+\newblock The Hausdorff Dimension of Graphs of Weierstrass Functions.
+\newblock {\em Proceedings of the American Mathematical Society}, 126(3):791--800, 1998.
+
+\bibitem{RUAN2009187}
+H.-J. Ruan, W.-Y. Su, and K.~Yao.
+\newblock Box dimension and fractional integral of linear fractal interpolation functions.
+\newblock {\em Journal of Approximation Theory}, 161(1):187--197, 2009.
+
+\bibitem{1993IV}
+M.~F. Barnsley (red.).
+\newblock {\em Fractals Everywhere}.
+\newblock Academic Press, Second Edition, 1993.
+
+\bibitem{book}
+P.~Massopust.
+\newblock {\em Interpolation and Approximation with Splines and Fractals}.
+\newblock Oxford University Press, 2010.
+
+\bibitem{article}
+M.~Navascués.
+\newblock Fractal Polynomial Interpolation.
+\newblock {\em Zeitschrift für Analysis und ihre Anwendungen}, 24:401--418, 2005.
+
+\end{thebibliography}
 
 \end{document}
