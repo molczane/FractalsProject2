@@ -12,7 +12,7 @@
 \usecolortheme{whale}
 
 \title[Funkcje Interpolacji Fraktalnych]{\textbf{Funkcje Interpolacji Fraktalnych}}
-\subtitle{Analiza FIF, funkcji Weierstrassa i krzywych wypełniających przestrzeń}
+\subtitle{Teoria, implementacja i analiza wymiaru Minkowskiego}
 \author[R. Filarecki, E. Mołczan]{Rafał Filarecki \and Ernest Mołczan}
 \date{\today}
 
@@ -26,26 +26,27 @@
 \end{frame}
 
 %==============================================================================
-% SLAJD 2: Wprowadzenie - FIF jako centralna koncepcja
+% SLAJD 2: Wprowadzenie - motywacja i idea
 %==============================================================================
-\begin{frame}{Wprowadzenie: Spektrum interpolacji fraktalnej}
+\begin{frame}{Wprowadzenie: Po co interpolacja fraktalna?}
     \begin{columns}
         \begin{column}{0.55\textwidth}
-            \textbf{Główna idea:} FIF to pomost między interpolacją liniową a wypełnianiem przestrzeni.
-            \vspace{0.3cm}
-
-            \textbf{Parametr $d$ kontroluje szorstkość:}
+            \textbf{Problem:} Jak modelować ``poszarpane'' wykresy?
             \begin{itemize}
-                \item $d = 0$ $\rightarrow$ interpolacja liniowa ($D = 1$)
-                \item $0 < |d| < 1$ $\rightarrow$ fraktalna struktura ($1 < D < 2$)
-                \item $|d| \to 1$ $\rightarrow$ quasi-wypełnianie ($D \to 2$)
+                \item Notowania giełdowe
+                \item Sygnały EKG
+                \item Profile górskie, linie brzegowe
             \end{itemize}
-            \vspace{0.3cm}
 
-            \textbf{Związane koncepty:}
+            \vspace{0.3cm}
+            \textbf{Klasyczna interpolacja} (wielomiany, splajny) daje \textbf{gładkie} krzywe -- nieodpowiednie dla danych fraktalnych.
+
+            \vspace{0.3cm}
+            \textbf{Rozwiązanie FIF:}
             \begin{itemize}
-                \item Weierstrass $\approx$ prototyp struktury fraktalnej
-                \item Peano/Hilbert $\approx$ przypadek graniczny
+                \item Łączymy punkty \textbf{strukturą samopodobną}
+                \item Wykres jest atraktorem układu IFS
+                \item Kontrolujemy ``szorstkość'' parametrem
             \end{itemize}
         \end{column}
         \begin{column}{0.45\textwidth}
@@ -56,59 +57,119 @@
 \end{frame}
 
 %==============================================================================
-% SLAJD 3: FIF - Definicja i konstrukcja IFS
+% SLAJD 3: Konstrukcja FIF - przekształcenia afiniczne
 %==============================================================================
-\begin{frame}{FIF: Definicja i konstrukcja}
-    \begin{block}{Fraktalna Funkcja Interpolacyjna}
-        Funkcja ciągła $f: [x_0, x_n] \to \mathbb{R}$ przechodząca przez punkty $(x_i, y_i)$, będąca \textbf{atraktorem układu IFS}.
+\begin{frame}{Konstrukcja FIF: Przekształcenia afiniczne}
+    \textbf{Dane:} Punkty interpolacji $(x_0, y_0), (x_1, y_1), \ldots, (x_n, y_n)$.
+
+    \vspace{0.2cm}
+    \textbf{Idea:} Dzielimy odcinek $[x_0, x_n]$ na $n$ przedziałów i definiujemy przekształcenia $w_i$, które ``kopiują'' cały wykres w mniejsze przedziały.
+
+    \vspace{0.2cm}
+    \begin{block}{Przekształcenie afiniczne $w_i$}
+        \[
+        w_i(x, y) = \begin{pmatrix} a_i & 0 \\ e_i & d_i \end{pmatrix} \begin{pmatrix} x \\ y \end{pmatrix} + \begin{pmatrix} c_i \\ f_i \end{pmatrix}
+        \]
+        \begin{itemize}
+            \item $a_i = \frac{x_i - x_{i-1}}{x_n - x_0}$ -- współczynnik ściskający dziedzinę
+            \item $d_i \in (-1, 1)$ -- \textbf{współczynnik skalowania pionowego}
+        \end{itemize}
     \end{block}
 
-    \vspace{0.3cm}
-    \textbf{Transformacje afiniczne:}
-    \[
-    w_i(x, y) = \begin{pmatrix} a_i & 0 \\ e_i & d_i \end{pmatrix} \begin{pmatrix} x \\ y \end{pmatrix} + \begin{pmatrix} c_i \\ f_i \end{pmatrix}
-    \]
+    \vspace{0.2cm}
+    \begin{alertblock}{Rola parametru $d$}
+        \begin{itemize}
+            \item $d = 0$ $\Rightarrow$ interpolacja liniowa (brak struktury fraktalnej)
+            \item $|d| \to 1$ $\Rightarrow$ coraz większa ``szorstkość'' wykresu
+        \end{itemize}
+    \end{alertblock}
+\end{frame}
+
+%==============================================================================
+% SLAJD 4: Twierdzenie o istnieniu - Operator Read'a-Bajrakareviča
+%==============================================================================
+\begin{frame}{Istnienie rozwiązania: Operator Read'a-Bajrakareviča}
+    \begin{theorem}[Istnienie i jednoznaczność FIF]
+        Jeśli $|d_i| < 1$ dla wszystkich $i$, to operator $T$ zdefiniowany przez przekształcenia $w_i$ jest \textbf{kontrakcją} w przestrzeni funkcji ciągłych.
+    \end{theorem}
 
     \vspace{0.3cm}
+    \textbf{Konsekwencje (Twierdzenie Banacha):}
+    \begin{enumerate}
+        \item Istnieje \textbf{dokładnie jedna} funkcja ciągła $f$ spełniająca warunek samopodobieństwa.
+        \item Funkcja $f$ przechodzi przez wszystkie punkty interpolacji.
+        \item Wykres $f$ jest \textbf{atraktorem} układu IFS $\{w_1, \ldots, w_n\}$.
+    \end{enumerate}
+
+    \vspace{0.3cm}
+    \begin{alertblock}{Warunek zbieżności}
+        $|d_i| < 1$ dla wszystkich $i$ -- gwarantuje istnienie i jednoznaczność rozwiązania.
+    \end{alertblock}
+\end{frame}
+
+%==============================================================================
+% SLAJD 5: Wymiar fraktalny FIF - wzory
+%==============================================================================
+\begin{frame}{Wymiar fraktalny FIF: Wzory}
+    Dla $n$ punktów równoodległych i jednakowych współczynników $|d|$:
+
+    \vspace{0.3cm}
+    \begin{block}{Przypadek ``gładki'' ($\sum |d_i| < 1$)}
+        Wykres jest mało poszarpany:
+        \[
+        D = 1
+        \]
+    \end{block}
+
+    \begin{block}{Przypadek fraktalny ($\sum |d_i| > 1$)}
+        Wykres ma strukturę fraktalną:
+        \[
+        D = 1 + \frac{\log\left(\sum_{i=1}^{n} |d_i|\right)}{\log(n)}
+        \]
+    \end{block}
+
+    \vspace{0.2cm}
+    \textbf{Dla równych $|d|$:} $\sum |d_i| = n \cdot |d|$, więc:
+    \[
+    D = 1 + \frac{\log(n \cdot |d|)}{\log(n)} = 1 + 1 + \frac{\log |d|}{\log n} = 2 + \frac{\log |d|}{\log n}
+    \]
+\end{frame}
+
+%==============================================================================
+% SLAJD 6: Gładkość a wymiar - wykładnik Höldera
+%==============================================================================
+\begin{frame}{Gładkość a wymiar: Wykładnik Höldera}
     \begin{columns}
         \begin{column}{0.5\textwidth}
-            \textbf{Parametr $d_i \in (-1, 1)$:}
+            \textbf{Wykładnik Höldera $\alpha$:}
+
+            Miara ``gładkości'' funkcji -- $f$ jest $\alpha$-hölderowska jeśli:
+            \[
+            |f(x) - f(y)| \leq C \cdot |x - y|^\alpha
+            \]
+
+            \vspace{0.3cm}
+            \textbf{Związek z wymiarem:}
+            \[
+            \boxed{\alpha = 2 - D}
+            \]
+
+            \vspace{0.3cm}
+            \textbf{Interpretacja:}
             \begin{itemize}
-                \item Współczynnik skalowania pionowego
-                \item Kontroluje ``szorstkość'' FIF
-                \item Warunek zbieżności: $|d_i| < 1$
+                \item $D \to 1$ $\Rightarrow$ $\alpha \to 1$ (gładka)
+                \item $D \to 2$ $\Rightarrow$ $\alpha \to 0$ (``nerwowa'')
             \end{itemize}
         \end{column}
         \begin{column}{0.5\textwidth}
-            \textbf{Wymiar fraktalny:}
-            \[
-            \sum_{i=1}^{n} |d_i|^D = 1
-            \]
-            Dla równych $d$:
-            \[
-            D = \frac{\log n}{-\log |d|}
-            \]
+            \centering
+            \includegraphics[width=\textwidth]{assets/fif_spectrum.png}
         \end{column}
     \end{columns}
 \end{frame}
 
 %==============================================================================
-% SLAJD 4: FIF - Spektrum wymiarów
-%==============================================================================
-\begin{frame}{FIF: Spektrum od $d=0$ do $d \to 1$}
-    \begin{figure}
-        \centering
-        \includegraphics[width=\textwidth]{assets/fif_spectrum.png}
-        \caption{Ewolucja FIF wraz ze wzrostem współczynnika $d$. Ostatni panel: krzywa Hilberta jako granica.}
-    \end{figure}
-
-    \begin{alertblock}{Kluczowa obserwacja}
-        Wzrost $|d|$ prowadzi do wzrostu wymiaru fraktalnego $D$ oraz ``szorstkości'' funkcji.
-    \end{alertblock}
-\end{frame}
-
-%==============================================================================
-% SLAJD 5: Związek z funkcją Weierstrassa
+% SLAJD 7: Związek z funkcją Weierstrassa
 %==============================================================================
 \begin{frame}{Związek z funkcją Weierstrassa}
     \begin{columns}
@@ -118,50 +179,55 @@
             W(x) = \sum_{n=0}^{\infty} a^n \cos(b^n \pi x)
             \]
 
-            \textbf{Wymiar fraktalny:}
-            \[
-            D = 2 + \frac{\log a}{\log b}
-            \]
+            \textbf{Wymiar:} $D = 2 + \frac{\log a}{\log b}$
 
             \vspace{0.3cm}
             \textbf{Analogia z FIF:}
             \begin{itemize}
-                \item $a$ w Weierstrassie $\leftrightarrow$ $d$ w FIF
-                \item Oba kontrolują szorstkość
+                \item Parametr $a$ $\leftrightarrow$ parametr $d$
+                \item Oba kontrolują ``szorstkość''
                 \item Wymiar $\in (1, 2)$
             \end{itemize}
+
+            \vspace{0.2cm}
+            \textbf{Weierstrass jako prototyp:}
+
+            Struktura fraktalna między punktami FIF przypomina funkcję Weierstrassa.
         \end{column}
         \begin{column}{0.5\textwidth}
             \centering
             \includegraphics[width=\textwidth]{assets/weierstrass_interpolation.png}
         \end{column}
     \end{columns}
-
-    \vspace{0.2cm}
-    \begin{block}{Interpolacja z perturbacją Weierstrassa}
-        Funkcja \texttt{weierstrass\_interpolation()} dodaje fraktalną strukturę do interpolacji liniowej.
-    \end{block}
 \end{frame}
 
 %==============================================================================
-% SLAJD 6: Związek z krzywymi wypełniającymi
+% SLAJD 8: Krzywe wypełniające przestrzeń jako granica
 %==============================================================================
-\begin{frame}{Krzywe wypełniające przestrzeń jako granica}
+\begin{frame}{Krzywe wypełniające przestrzeń jako granica FIF}
     \begin{columns}
         \begin{column}{0.45\textwidth}
-            \textbf{Krzywe Hilberta, Peano, Smoka:}
+            \textbf{Gdy $|d| \to 1$:}
             \begin{itemize}
-                \item Ciągłe krzywe wypełniające kwadrat
-                \item Wymiar topologiczny = 1
-                \item \textbf{Wymiar Minkowskiego = 2}
+                \item $\sum |d_i| \to n$
+                \item $D \to 2$
+                \item FIF ``wypełnia'' przestrzeń
             \end{itemize}
 
             \vspace{0.3cm}
-            \textbf{Związek z FIF:}
+            \textbf{Krzywe Hilberta, Peano:}
             \begin{itemize}
-                \item Gdy $d \to 1$, FIF zaczyna ``wypełniać'' przestrzeń
-                \item Wymiar $D \to 2$
-                \item Krzywe Peano = teoretyczna granica FIF
+                \item Wymiar topologiczny = 1
+                \item Wymiar Minkowskiego = 2
+                \item Granica teoretyczna FIF
+            \end{itemize}
+
+            \vspace{0.3cm}
+            \textbf{Spektrum FIF:}
+            \begin{itemize}
+                \item $d = 0$: liniowa ($D = 1$)
+                \item $0 < |d| < 1$: fraktalna
+                \item $|d| \to 1$: quasi-Peano ($D \to 2$)
             \end{itemize}
         \end{column}
         \begin{column}{0.55\textwidth}
@@ -172,37 +238,9 @@
 \end{frame}
 
 %==============================================================================
-% SLAJD 7: Zastosowania praktyczne FIF
+% SLAJD 9: Metoda box-counting i ograniczenia
 %==============================================================================
-\begin{frame}{Zastosowania praktyczne FIF}
-    \begin{figure}
-        \centering
-        \includegraphics[width=\textwidth]{assets/fif_practical.png}
-    \end{figure}
-
-    \begin{columns}
-        \begin{column}{0.33\textwidth}
-            \centering
-            \textbf{Linie brzegowe}\\
-            Nieregularne granice
-        \end{column}
-        \begin{column}{0.33\textwidth}
-            \centering
-            \textbf{Profile terenu}\\
-            Góry, formacje geologiczne
-        \end{column}
-        \begin{column}{0.33\textwidth}
-            \centering
-            \textbf{Kontrola szorstkości}\\
-            Parametr $d$
-        \end{column}
-    \end{columns}
-\end{frame}
-
-%==============================================================================
-% SLAJD 8: Metoda box-counting
-%==============================================================================
-\begin{frame}{Metoda box-counting: weryfikacja}
+\begin{frame}{Metoda box-counting: Weryfikacja i ograniczenia}
     \begin{columns}
         \begin{column}{0.5\textwidth}
             \textbf{Algorytm:}
@@ -210,56 +248,31 @@
             D_{box} = \lim_{\varepsilon \to 0} \frac{\log N(\varepsilon)}{\log(1/\varepsilon)}
             \]
 
-            \vspace{0.3cm}
-            \textbf{Weryfikacja na znanych obiektach:}
+            \textbf{Weryfikacja:}
             \begin{table}
                 \small
                 \begin{tabular}{lcc}
                     \toprule
                     Obiekt & $D_{theo}$ & $D_{num}$ \\
                     \midrule
-                    Prosta & 1.0 & 0.99 \\
                     Sierpiński & 1.585 & 1.58 \\
                     Dywan & 1.893 & 1.87 \\
                     \bottomrule
                 \end{tabular}
             \end{table}
 
-            Błędy $< 5\%$ dla struktur samopodobnych.
+            \textbf{Problem dla FIF przy dużych $|d|$:}
+            \begin{enumerate}
+                \item Gwałtowne oscylacje
+                \item Efekt ``rozpadu'' punktów
+                \item Ograniczony zakres $\varepsilon$
+            \end{enumerate}
         \end{column}
-        \begin{column}{0.5\textwidth}
-            \centering
-            \includegraphics[width=\textwidth]{assets/sierpinski_box_counting.png}
-        \end{column}
-    \end{columns}
-\end{frame}
-
-%==============================================================================
-% SLAJD 9: Analiza wymiaru FIF - teoria vs numeryka
-%==============================================================================
-\begin{frame}{Analiza wymiaru FIF: ograniczenia numeryczne}
-    \begin{columns}
         \begin{column}{0.5\textwidth}
             \centering
             \includegraphics[width=\textwidth]{assets/fif_dimension_vs_d.png}
         \end{column}
-        \begin{column}{0.5\textwidth}
-            \textbf{Problem:} Dla wysokich $|d|$ wymiar numeryczny jest niedoszacowany.
-
-            \vspace{0.3cm}
-            \textbf{Przyczyny:}
-            \begin{enumerate}
-                \item \textbf{Gwałtowne oscylacje} -- amplituda rośnie wykładniczo
-                \item \textbf{Efekt ``rozpadu''} -- punkty widoczne jako chmura
-                \item \textbf{Ograniczony zakres $\varepsilon$} -- drobne struktury niewidoczne
-            \end{enumerate}
-        \end{column}
     \end{columns}
-
-    \vspace{0.3cm}
-    \begin{alertblock}{Wniosek}
-        Box-counting jest skuteczny dla $|d| < 0.6$, ale wymaga ostrożnej interpretacji dla wyższych wartości.
-    \end{alertblock}
 \end{frame}
 
 %==============================================================================
@@ -267,26 +280,28 @@
 %==============================================================================
 \begin{frame}{Podsumowanie}
     \begin{enumerate}
-        \item \textbf{FIF jako spektrum interpolacji:}
+        \item \textbf{FIF -- definicja:} Atraktor IFS, funkcja ciągła przechodząca przez punkty interpolacji z fraktalną strukturą między nimi.
+
+        \vspace{0.2cm}
+        \item \textbf{Parametr $d$:} Kontroluje szorstkość i wymiar fraktalny.
+
+        \vspace{0.2cm}
+        \item \textbf{Wymiar FIF:}
         \begin{itemize}
-            \item $d = 0$ $\to$ liniowa ($D = 1$)
-            \item $0 < |d| < 1$ $\to$ fraktalna ($1 < D < 2$)
-            \item $|d| \to 1$ $\to$ quasi-wypełniająca ($D \to 2$)
+            \item $\sum |d_i| < 1 \Rightarrow D = 1$ (gładka)
+            \item $\sum |d_i| > 1 \Rightarrow D = 1 + \frac{\log(\sum |d_i|)}{\log n}$
         \end{itemize}
 
-        \vspace{0.3cm}
-        \item \textbf{Weierstrass} = prototyp struktury fraktalnej
+        \vspace{0.2cm}
+        \item \textbf{Gładkość:} $\alpha = 2 - D$ (wykładnik Höldera)
 
-        \vspace{0.3cm}
-        \item \textbf{Krzywe Peano} = teoretyczna granica FIF
-
-        \vspace{0.3cm}
-        \item \textbf{Box-counting:} skuteczny dla umiarkowanych $d$, ograniczenia dla $|d| \to 1$
+        \vspace{0.2cm}
+        \item \textbf{Powiązania:} Weierstrass (prototyp), Peano (granica)
     \end{enumerate}
 
-    \vspace{0.5cm}
-    \begin{block}{Kod źródłowy}
-        Implementacja w Pythonie: \texttt{weierstrass.py}, \texttt{space\_filling.py}, \texttt{fractal\_interpolation.py}, \texttt{box\_counting.py}
+    \vspace{0.3cm}
+    \begin{block}{Implementacja}
+        Python: \texttt{fractal\_interpolation.py}, \texttt{box\_counting.py}, \texttt{weierstrass.py}
     \end{block}
 \end{frame}
 
