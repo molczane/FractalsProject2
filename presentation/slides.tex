@@ -202,37 +202,32 @@
 \end{frame}
 
 %==============================================================================
-% SLAJD 8: Krzywe wypełniające przestrzeń jako granica
+% SLAJD 8: Krzywe Peano i FIF - wspólny framework IFS
 %==============================================================================
-\begin{frame}{Krzywe wypełniające przestrzeń jako granica FIF}
+\begin{frame}{Krzywe Peano jako funkcje interpolacji fraktalnej}
+    \textbf{Kluczowe odkrycie (Barnsley, Massopust 1989):} Zarówno FIF jak i krzywe Peano są \textbf{atraktorami IFS}!
+
+    \vspace{0.2cm}
     \begin{columns}
-        \begin{column}{0.45\textwidth}
-            \textbf{Gdy $|d| \to 1$:}
+        \begin{column}{0.5\textwidth}
+            \textbf{Krzywa Hilberta jako interpolacja:}
             \begin{itemize}
-                \item $\sum |d_i| \to n$
-                \item $D \to 2$
-                \item FIF ``wypełnia'' przestrzeń
+                \item Odwzorowuje $t \in [0,1] \to (x(t), y(t)) \in [0,1]^2$
+                \item Dla dowolnych punktów w kwadracie wyznacza \textbf{kolejność odwiedzin}
+                \item Jest to \textbf{interpolacja parametryczna}
             \end{itemize}
 
-            \vspace{0.3cm}
-            \textbf{Krzywe Hilberta, Peano:}
+            \vspace{0.2cm}
+            \textbf{FIF przy $d \to 1$:}
             \begin{itemize}
-                \item Wymiar topologiczny = 1
-                \item Wymiar Minkowskiego = 2
-                \item Granica teoretyczna FIF
-            \end{itemize}
-
-            \vspace{0.3cm}
-            \textbf{Spektrum FIF:}
-            \begin{itemize}
-                \item $d = 0$: liniowa ($D = 1$)
-                \item $0 < |d| < 1$: fraktalna
-                \item $|d| \to 1$: quasi-Peano ($D \to 2$)
+                \item Wykres ``wypełnia'' coraz więcej przestrzeni
+                \item $D \to 2$ (jak krzywa Peano)
+                \item Zachowuje własność funkcji $y = f(x)$
             \end{itemize}
         \end{column}
-        \begin{column}{0.55\textwidth}
+        \begin{column}{0.5\textwidth}
             \centering
-            \includegraphics[width=\textwidth]{assets/curves_comparison.png}
+            \includegraphics[width=\textwidth]{assets/peano_fif_connection.png}
         \end{column}
     \end{columns}
 \end{frame}

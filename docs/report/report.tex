@@ -212,16 +212,35 @@ W pracy przeanalizowano:
     \item \textbf{Krzywą smoka} -- konstrukcja przez ``składanie papieru''
 \end{itemize}
 
-\subsection{Związek z FIF}
+\subsection{Związek z FIF: Wspólny framework IFS}
 
-Gdy współczynnik skalowania $d$ w FIF dąży do 1, funkcja zaczyna ``wypełniać'' coraz większą część płaszczyzny między punktami interpolacji. W granicy zachowanie FIF zbliża się do krzywych wypełniających przestrzeń.
+Kluczowym odkryciem Barnsley'a i Massopusta (1989) jest fakt, że zarówno FIF, jak i krzywe wypełniające przestrzeń są \textbf{atraktorami układów iterowanych funkcji (IFS)}:
+\begin{itemize}
+    \item \textbf{FIF}: IFS w $\mathbb{R}^2$ z więzami interpolacji -- wymiar $1 < D < 2$
+    \item \textbf{Krzywe Peano}: IFS w $\mathbb{R}^2$ bez więzów -- wymiar $D = 2$
+\end{itemize}
 
-Ta obserwacja uzasadnia traktowanie FIF jako \textbf{uogólnienia interpolacji} obejmującego:
+\textbf{Hidden Variable Fractal Interpolation Functions} stanowią teoretyczny most między tymi konstrukcjami. W tym podejściu atraktor IFS jest konstruowany w przestrzeni wyższego wymiaru $\mathbb{R}^M$ ($M > 2$), gdzie może przyjąć postać krzywej wypełniającej przestrzeń. Rzut tego atraktora na $\mathbb{R}$ daje funkcję interpolacyjną o kontrolowanej szorstkości.
+
+Gdy współczynnik skalowania $d$ w FIF dąży do 1, funkcja zaczyna ``wypełniać'' coraz większą część płaszczyzny. Ta obserwacja uzasadnia traktowanie FIF jako \textbf{uogólnienia interpolacji}:
 \begin{itemize}
     \item $d = 0$: interpolacja liniowa ($D = 1$)
     \item $0 < d < 1$: interpolacja fraktalna ($1 < D < 2$)
     \item $d \to 1$: quasi-wypełnianie przestrzeni ($D \to 2$)
 \end{itemize}
+
+\subsection{Krzywa Hilberta jako interpolacja parametryczna}
+
+Krzywe wypełniające przestrzeń mogą być postrzegane jako forma \textbf{interpolacji parametrycznej}. Krzywa Hilberta definiuje odwzorowanie $t \in [0,1] \to (x(t), y(t)) \in [0,1]^2$, które dla dowolnego zbioru punktów w kwadracie jednostkowym wyznacza naturalną kolejność ich ``odwiedzin''.
+
+Rysunek~\ref{fig:peano_fif} ilustruje tę koncepcję: lewy panel pokazuje jak krzywa Hilberta przechodzi przez punkty danych w określonej kolejności (interpolacja parametryczna), prawy panel pokazuje jak FIF z rosnącym $d$ zbliża się do zachowania wypełniającego przestrzeń.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../../presentation/assets/peano_fif_connection.png}
+    \caption{Związek krzywych Peano z FIF: (lewo) krzywa Hilberta jako interpolacja parametryczna -- punkty są odwiedzane w kolejności wyznaczonej przez krzywą; (prawo) FIF z rosnącym $d$ -- zachowanie zbliża się do krzywej wypełniającej przestrzeń.}
+    \label{fig:peano_fif}
+\end{figure}
 
 \subsection{Analiza numeryczna wymiaru}
 

@@ -761,6 +761,143 @@ def plot_interpolation_comparison(
     return fig
 
 
+def plot_hilbert_interpolation(
+    data_points: np.ndarray = None,
+    hilbert_order: int = 6,
+    save_path: Optional[str] = None,
+    show: bool = True
+) -> Figure:
+    """
+    Wizualizacja krzywej Hilberta jako formy interpolacji parametrycznej.
+
+    Pokazuje jak krzywa Hilberta "odwiedza" punkty danych w określonej kolejności,
+    demonstrując związek między krzywymi wypełniającymi przestrzeń a interpolacją.
+
+    Args:
+        data_points: Punkty danych 2D do "interpolacji". Domyślnie losowe punkty.
+        hilbert_order: Rząd krzywej Hilberta (wyższy = dokładniejsza aproksymacja)
+        save_path: Ścieżka do zapisu
+        show: Czy wyświetlić wykres
+
+    Returns:
+        Obiekt Figure
+    """
+    from .space_filling import hilbert_curve
+    from .fractal_interpolation import simple_fif
+
+    setup_style()
+
+    if data_points is None:
+        # Punkty danych rozłożone w kwadracie jednostkowym
+        np.random.seed(42)
+        data_points = np.array([
+            [0.1, 0.2], [0.3, 0.8], [0.5, 0.4],
+            [0.7, 0.9], [0.9, 0.3], [0.2, 0.6],
+            [0.8, 0.7], [0.4, 0.1]
+        ])
+
+    fig, axes = plt.subplots(2, 2, figsize=(14, 12))
+
+    # Panel 1: Krzywa Hilberta z punktami danych
+    ax = axes[0, 0]
+    x_h, y_h = hilbert_curve(hilbert_order)
+    ax.plot(x_h, y_h, color=COLORS['primary'], linewidth=0.5, alpha=0.7, label='Krzywa Hilberta')
+    ax.scatter(data_points[:, 0], data_points[:, 1],
+               color=COLORS['quaternary'], s=120, zorder=5, edgecolors='black', linewidth=1.5)
+
+    # Znajdź najbliższy punkt na krzywej dla każdego punktu danych
+    hilbert_points = np.column_stack([x_h, y_h])
+    point_order = []
+    for i, dp in enumerate(data_points):
+        distances = np.sqrt(np.sum((hilbert_points - dp)**2, axis=1))
+        nearest_idx = np.argmin(distances)
+        point_order.append((nearest_idx, i))
+        # Linia łącząca punkt z krzywą
+        ax.plot([dp[0], x_h[nearest_idx]], [dp[1], y_h[nearest_idx]],
+                'k--', linewidth=1, alpha=0.5)
+
+    # Sortuj punkty według kolejności na krzywej Hilberta
+    point_order.sort(key=lambda x: x[0])
+    visit_order = [p[1] for p in point_order]
+
+    # Numeruj punkty według kolejności odwiedzin
+    for rank, point_idx in enumerate(visit_order):
+        ax.annotate(str(rank + 1), data_points[point_idx],
+                    fontsize=10, fontweight='bold', ha='center', va='bottom',
+                    xytext=(0, 8), textcoords='offset points')
+
+    ax.set_title(f'Krzywa Hilberta (rząd {hilbert_order}) "odwiedza" punkty danych\n'
+                 f'Numery pokazują kolejność parametryczną', fontsize=11)
+    ax.set_xlim(-0.05, 1.05)
+    ax.set_ylim(-0.05, 1.05)
+    ax.set_aspect('equal')
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+
+    # Panel 2: Ścieżka przez punkty w kolejności Hilberta
+    ax = axes[0, 1]
+    ordered_points = data_points[visit_order]
+    ax.plot(ordered_points[:, 0], ordered_points[:, 1],
+            color=COLORS['secondary'], linewidth=2, marker='o', markersize=10,
+            markerfacecolor=COLORS['quaternary'], markeredgecolor='black')
+
+    for rank, point_idx in enumerate(visit_order):
+        ax.annotate(str(rank + 1), data_points[point_idx],
+                    fontsize=10, fontweight='bold', ha='center', va='bottom',
+                    xytext=(0, 10), textcoords='offset points')
+
+    ax.set_title('Interpolacja parametryczna: połączenie punktów\n'
+                 'w kolejności wyznaczonej przez krzywą Hilberta', fontsize=11)
+    ax.set_xlim(-0.05, 1.05)
+    ax.set_ylim(-0.05, 1.05)
+    ax.set_aspect('equal')
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+
+    # Panel 3: FIF z wysokim d (quasi-wypełniające)
+    ax = axes[1, 0]
+    fif_points = np.array([[0, 0], [0.5, 1], [1, 0]])
+    x_fif, y_fif = simple_fif(fif_points, d=0.85, n_iterations=8)
+    ax.plot(x_fif, y_fif, color=COLORS['tertiary'], linewidth=0.2, alpha=0.8)
+    ax.scatter(fif_points[:, 0], fif_points[:, 1],
+               color=COLORS['quaternary'], s=100, zorder=5, edgecolors='black')
+    ax.set_title('FIF z d = 0.85\nZachowanie quasi-wypełniające przestrzeń', fontsize=11)
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+
+    # Panel 4: Porównanie - FIF vs Hilbert
+    ax = axes[1, 1]
+    # Hilbert przeskalowany do podobnego rozmiaru
+    x_h_scaled = x_h
+    y_h_scaled = y_h * 0.8 + 0.1  # Skalowanie do zakresu podobnego do FIF
+    ax.plot(x_h_scaled, y_h_scaled, color=COLORS['primary'], linewidth=0.3,
+            alpha=0.5, label='Krzywa Hilberta (D=2)')
+
+    # FIF z bardzo wysokim d
+    x_fif_high, y_fif_high = simple_fif(fif_points, d=0.9, n_iterations=8)
+    ax.plot(x_fif_high, y_fif_high, color=COLORS['tertiary'], linewidth=0.3,
+            alpha=0.8, label='FIF d=0.9 (D≈1.95)')
+    ax.scatter(fif_points[:, 0], fif_points[:, 1],
+               color=COLORS['quaternary'], s=100, zorder=5, edgecolors='black')
+    ax.legend(loc='upper right', fontsize=9)
+    ax.set_title('Porównanie: FIF przy d→1 zbliża się\ndo zachowania krzywej wypełniającej', fontsize=11)
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+
+    plt.suptitle('Krzywe Peano/Hilberta jako forma interpolacji parametrycznej',
+                 fontsize=14, fontweight='bold')
+    plt.tight_layout()
+
+    if save_path:
+        os.makedirs(os.path.dirname(save_path) if os.path.dirname(save_path) else '.', exist_ok=True)
+        fig.savefig(save_path, dpi=150, bbox_inches='tight', facecolor='white')
+
+    if show:
+        plt.show()
+
+    return fig
+
+
 if __name__ == "__main__":
     # Test wizualizacji
     create_summary_figure(save_path='../output/figures/summary.png', show=True)
