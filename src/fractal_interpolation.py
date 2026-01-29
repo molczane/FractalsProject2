@@ -129,10 +129,11 @@ def fif_dimension_theoretical(scaling_factors: np.ndarray) -> float:
     """
     Oblicza teoretyczny wymiar fraktalny FIF.
 
-    Dla FIF z N-1 segmentami i współczynnikami skalowania d_i,
-    wymiar D jest rozwiązaniem równania:
+    Dla klasycznych FIF z równomiernym podziałem osi X (n segmentów)
+    wymiar wykresu jest dany wzorem Barnsleya:
 
-    Σ |d_i|^D = 1
+    - jeśli Σ |d_i| <= 1, to D = 1
+    - jeśli Σ |d_i| > 1, to D = 1 + log(Σ |d_i|) / log(n)
 
     Args:
         scaling_factors: Współczynniki skalowania
@@ -142,33 +143,21 @@ def fif_dimension_theoretical(scaling_factors: np.ndarray) -> float:
 
     Note:
         Dla przypadku gdy wszystkie |d_i| są równe d:
-        (N-1) * d^D = 1
-        D = -log(N-1) / log(d)
+        Σ |d_i| = n * |d|
+        D = 1 + log(n * |d|) / log(n)  (gdy n * |d| > 1)
     """
     scaling_factors = np.asarray(scaling_factors)
     abs_d = np.abs(scaling_factors)
 
-    if np.all(abs_d == 0):
-        return 1.0  # Interpolacja liniowa
-
-    # Rozwiązujemy równanie numerycznie
-    # Σ |d_i|^D = 1
-    from scipy.optimize import brentq
-
-    def equation(D):
-        return np.sum(abs_d ** D) - 1
-
-    # Szukamy D w przedziale (1, 2)
-    try:
-        # Sprawdzamy czy istnieje rozwiązanie
-        if equation(1.0) * equation(2.0) > 0:
-            # Brak rozwiązania w przedziale - zwracamy graniczną wartość
-            return 1.0 if equation(1.0) < 0 else 2.0
-
-        dimension = brentq(equation, 1.0, 2.0)
-        return dimension
-    except ValueError:
+    n_segments = len(abs_d)
+    if n_segments == 0:
         return 1.0
+
+    sum_abs_d = float(np.sum(abs_d))
+    if sum_abs_d <= 1.0:
+        return 1.0
+
+    return 1.0 + np.log(sum_abs_d) / np.log(n_segments)
 
 
 def weierstrass_interpolation(
