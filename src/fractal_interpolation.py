@@ -125,50 +125,73 @@ def fractal_interpolation_function(
     return current_x, current_y
 
 
-def fif_dimension_theoretical(scaling_factors: np.ndarray) -> float:
-    """
-    Oblicza teoretyczny wymiar fraktalny FIF.
+def fif_dimension_theoretical(
+    scaling_factors: np.ndarray,
+    horizontal_scalings: Optional[np.ndarray] = None,
+) -> float:
+    """Oblicza teoretyczny wymiar (box/Minkowski) wykresu klasycznej FIF.
 
-    Dla FIF z N-1 segmentami i współczynnikami skalowania d_i,
-    wymiar D jest rozwiązaniem równania:
+    Dla klasycznych fraktalnych funkcji interpolacyjnych (FIF) budowanych na
+    bazie afinicznych przekształceń na wykresie, istnieje znany wzór/twierdzenie
+    (Barnsley i in.) na wymiar wykresu w zależności od:
+    - pionowych skalowań `d_i` ("roughness")
+    - poziomych skalowań `a_i` (skurcz dziedziny na segmentach)
 
-    Σ |d_i|^D = 1
+    W typowym przypadku (równoodległe węzły, czyli `a_i = 1/n`):
+      - jeśli ``sum_i |d_i| <= 1`` to ``D = 1``
+      - w przeciwnym razie ``D`` jest jedynym rozwiązaniem równania
+        ``sum_i |d_i| * a_i^(D-1) = 1`` w przedziale ``(1, 2)``,
+        co dla stałego `d` upraszcza się do ``D = 2 + log|d|/log n``.
 
     Args:
-        scaling_factors: Współczynniki skalowania
+        scaling_factors: Współczynniki skalowania pionowego `d_i`, shape (m,).
+        horizontal_scalings: Współczynniki skurczu poziomego `a_i`, shape (m,).
+            Jeśli `None`, zakładamy równoodległy podział dziedziny:
+            `a_i = 1/m`.
 
     Returns:
-        Teoretyczny wymiar fraktalny
-
-    Note:
-        Dla przypadku gdy wszystkie |d_i| są równe d:
-        (N-1) * d^D = 1
-        D = -log(N-1) / log(d)
+        Teoretyczny wymiar wykresu w zakresie \([1, 2]\).
     """
-    scaling_factors = np.asarray(scaling_factors)
+    scaling_factors = np.asarray(scaling_factors, dtype=float)
+    if scaling_factors.ndim != 1:
+        raise ValueError(f"scaling_factors musi być wektorem 1D, otrzymano: {scaling_factors.shape}")
+
     abs_d = np.abs(scaling_factors)
+    m = len(abs_d)
+    if m == 0:
+        raise ValueError("scaling_factors nie może być puste")
 
-    if np.all(abs_d == 0):
-        return 1.0  # Interpolacja liniowa
+    if horizontal_scalings is None:
+        a = np.full(m, 1.0 / m, dtype=float)
+    else:
+        a = np.asarray(horizontal_scalings, dtype=float)
+        if a.shape != abs_d.shape:
+            raise ValueError(
+                f"horizontal_scalings musi mieć ten sam kształt co scaling_factors, "
+                f"otrzymano: {a.shape} vs {abs_d.shape}"
+            )
+        if np.any(a <= 0) or np.any(a >= 1):
+            raise ValueError("Wszystkie współczynniki a_i muszą należeć do (0,1)")
 
-    # Rozwiązujemy równanie numerycznie
-    # Σ |d_i|^D = 1
+    # Przypadek gładki: wymiar = 1
+    if np.all(abs_d == 0) or np.sum(abs_d) <= 1.0:
+        return 1.0
+
     from scipy.optimize import brentq
 
-    def equation(D):
-        return np.sum(abs_d ** D) - 1
+    def equation(D: float) -> float:
+        # Σ |d_i| * a_i^(D-1) = 1
+        return float(np.sum(abs_d * (a ** (D - 1.0))) - 1.0)
 
-    # Szukamy D w przedziale (1, 2)
+    # Szukamy D w (1, 2). D=1 daje >0 (bo sum|d_i|>1). D=2 powinno dać <0.
     try:
-        # Sprawdzamy czy istnieje rozwiązanie
-        if equation(1.0) * equation(2.0) > 0:
-            # Brak rozwiązania w przedziale - zwracamy graniczną wartość
-            return 1.0 if equation(1.0) < 0 else 2.0
-
-        dimension = brentq(equation, 1.0, 2.0)
-        return dimension
+        if equation(2.0) >= 0:
+            # W skrajnym przypadku (numeryka/parametry) tniemy do 2.
+            return 2.0
+        return float(brentq(equation, 1.0, 2.0))
     except ValueError:
-        return 1.0
+        # Bezpieczny fallback
+        return 2.0
 
 
 def weierstrass_interpolation(

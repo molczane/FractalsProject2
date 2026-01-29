@@ -100,21 +100,25 @@ class TestFIFDimensionTheoretical:
 
     def test_uniform_scaling(self):
         """Test dla jednakowych współczynników."""
-        # Dla N-1 segmentów z d: (N-1) * d^D = 1
-        # D = -log(N-1) / log(d)
-
+        # Dla równoodległych węzłów (a_i = 1/n) oraz stałego d:
+        # jeśli n*|d| > 1, to D = 2 + log|d|/log(n)
         d = 0.5
         n_segments = 4
         scaling = np.full(n_segments, d)
 
         dim = fif_dimension_theoretical(scaling)
+        expected = 2 + np.log(abs(d)) / np.log(n_segments)
 
-        # Oczekiwany wymiar: -log(4) / log(0.5) = log(4) / log(2) = 2
-        # Ale to byłoby dla sumy |d|^D = 1, więc 4 * 0.5^D = 1
-        # 0.5^D = 0.25 = 0.5^2, więc D = 2
-        expected = 2.0
+        np.testing.assert_almost_equal(dim, expected, decimal=3)
 
-        np.testing.assert_almost_equal(dim, expected, decimal=2)
+    def test_threshold_sum_di_equals_one(self):
+        """Jeśli suma |d_i| <= 1, wykres ma wymiar 1."""
+        # n*|d| = 1
+        d = 0.25
+        n_segments = 4
+        scaling = np.full(n_segments, d)
+        dim = fif_dimension_theoretical(scaling)
+        assert dim == 1.0
 
     def test_dimension_range(self):
         """Test zakresu wymiaru (1 <= D <= 2)."""

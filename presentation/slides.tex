@@ -110,8 +110,8 @@
 %==============================================================================
 % SLAJD 5: Wymiar fraktalny FIF - wzory
 %==============================================================================
-\begin{frame}{Wymiar fraktalny FIF: Wzory}
-    Dla $n$ punktów równoodległych i jednakowych współczynników $|d|$:
+\begin{frame}{Wymiar fraktalny FIF: Wzory (wymiar wykresu)}
+    Interesuje nas \textbf{wymiar Minkowskiego/box} \textbf{wykresu} $\Gamma(f)\subset\mathbb{R}^2$.
 
     \vspace{0.3cm}
     \begin{block}{Przypadek ``gładki'' ($\sum |d_i| < 1$)}
@@ -122,14 +122,19 @@
     \end{block}
 
     \begin{block}{Przypadek fraktalny ($\sum |d_i| > 1$)}
-        Wykres ma strukturę fraktalną:
+        Wykres ma strukturę fraktalną, a wymiar $D\in(1,2)$ spełnia równanie:
+        \[
+        \sum_{i=1}^{n} |d_i|\, a_i^{D-1} = 1, \quad a_i = \frac{x_i-x_{i-1}}{x_n-x_0}
+        \]
+        \vspace{0.1cm}
+        Dla węzłów równoodległych ($a_i=1/n$) otrzymujemy:
         \[
         D = 1 + \frac{\log\left(\sum_{i=1}^{n} |d_i|\right)}{\log(n)}
         \]
     \end{block}
 
     \vspace{0.2cm}
-    \textbf{Dla równych $|d|$:} $\sum |d_i| = n \cdot |d|$, więc:
+    \textbf{Dla równych $|d|$:} $\sum |d_i| = n \cdot |d|$, więc (gdy $n|d|>1$):
     \[
     D = 1 + \frac{\log(n \cdot |d|)}{\log(n)} = 1 + 1 + \frac{\log |d|}{\log n} = 2 + \frac{\log |d|}{\log n}
     \]

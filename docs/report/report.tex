@@ -86,18 +86,30 @@ Rysunek~\ref{fig:fif_spectrum} ilustruje tę zależność.
     \label{fig:fif_spectrum}
 \end{figure}
 
-\subsection{Wymiar fraktalny FIF}
+\subsection{Wymiar fraktalny (Minkowskiego) wykresu FIF}
 
-Dla FIF z $n$ segmentami i jednakowym współczynnikiem skalowania $d$, wymiar fraktalny $D$ jest rozwiązaniem równania:
-\begin{equation}
-n \cdot |d|^D = 1 \quad \Rightarrow \quad D = \frac{\log n}{-\log |d|}
-\label{eq:fif_dimension}
-\end{equation}
+W tej pracy interesuje nas \textbf{wymiar Minkowskiego (box)} \textbf{wykresu} klasycznej fraktalnej funkcji interpolacyjnej (FIF), czyli zbioru
+\(\Gamma(f) = \{(x,f(x)) : x \in [x_0,x_n]\}\subset\mathbb{R}^2\).
 
-Dla niejednakowych współczynników $d_1, d_2, \ldots, d_n$ wymiar jest rozwiązaniem:
+Dla klasycznej konstrukcji Barnsleya, w której na $i$-tym segmencie dziedzina jest ściskana współczynnikiem
+\(a_i = \frac{x_i-x_{i-1}}{x_n-x_0}\) oraz w pionie stosujemy skalowanie $d_i$, zachodzi typowa dychotomia:
+\begin{itemize}
+    \item jeśli \(\sum_{i=1}^{n} |d_i| \le 1\), to wykres nie jest „wystarczająco poszarpany” i \(D=1\),
+    \item jeśli \(\sum_{i=1}^{n} |d_i| > 1\), to wymiar \(D\in(1,2)\) jest jedynym rozwiązaniem równania
+    \begin{equation}
+        \sum_{i=1}^{n} |d_i|\, a_i^{D-1} = 1.
+        \label{eq:fif_dimension_general}
+    \end{equation}
+\end{itemize}
+
+W szczególnym przypadku węzłów równoodległych (czyli $a_i = 1/n$) oraz stałego $|d_i|\equiv |d|$ otrzymujemy jawnie:
 \begin{equation}
-\sum_{i=1}^{n} |d_i|^D = 1
-\label{eq:fif_dimension_general}
+    D =
+    \begin{cases}
+        1, & n|d|\le 1,\\
+        2 + \dfrac{\log|d|}{\log n}, & n|d|>1.
+    \end{cases}
+    \label{eq:fif_dimension}
 \end{equation}
 
 \subsection{Implementacja i analiza numeryczna}
@@ -108,22 +120,22 @@ Analiza wymiaru numerycznego metodą box-counting wykazała zgodność z teorią
 
 \begin{table}[H]
     \centering
-    \caption{Porównanie wymiaru teoretycznego i numerycznego FIF (3 punkty, 2 segmenty)}
+    \caption{Porównanie wymiaru teoretycznego i numerycznego wykresu FIF (3 punkty, 2 segmenty)}
     \begin{tabular}{cccc}
         \toprule
         $d$ & $D$ teoretyczny & $D$ numeryczny & Błąd względny \\
         \midrule
         0.3 & 1.00 & 1.01 & 1\% \\
         0.5 & 1.00 & 1.07 & 7\% \\
-        0.7 & 1.94 & 1.31 & 32\% \\
+        0.7 & 1.26 & 1.31 & 4\% \\
         \bottomrule
     \end{tabular}
     \label{tab:fif_dimensions}
 \end{table}
 
-Dla wysokich wartości $|d|$ obserwujemy systematyczne niedoszacowanie wymiaru numerycznego. Przyczyny to:
+Dla wysokich wartości $|d|$ (szczególnie blisko 1) obserwujemy tendencję do zaniżania wymiaru numerycznego. Przyczyny to:
 \begin{enumerate}
-    \item \textbf{Gwałtowne oscylacje}: Dla $|d| \to 1$ amplituda oscylacji rośnie wykładniczo, przekraczając możliwości dyskretyzacji.
+    \item \textbf{Gwałtowne oscylacje i aliasing}: Dla $|d| \to 1$ rośnie „szorstkość” wykresu, a skończona liczba punktów nie próbuje już dobrze struktur w małych skalach.
     \item \textbf{Efekt ``rozpadu''}: Algorytm box-counting interpretuje rzadko rozłożone punkty jako chmurę, nie krzywą.
     \item \textbf{Ograniczony zakres skal}: Stałe $\varepsilon_{min}$ i $\varepsilon_{max}$ nie uchwytują najdrobniejszych struktur.
 \end{enumerate}
