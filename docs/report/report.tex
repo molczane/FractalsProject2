@@ -88,16 +88,20 @@ Rysunek~\ref{fig:fif_spectrum} ilustruje tę zależność.
 
 \subsection{Wymiar fraktalny FIF}
 
-Dla FIF z $n$ segmentami i jednakowym współczynnikiem skalowania $d$, wymiar fraktalny $D$ jest rozwiązaniem równania:
+Dla klasycznych FIF z równomiernym podziałem osi $x$ obowiązuje wzór Barnsleya na wymiar wykresu:
 \begin{equation}
-n \cdot |d|^D = 1 \quad \Rightarrow \quad D = \frac{\log n}{-\log |d|}
+D =
+\begin{cases}
+1, & \text{gdy } \sum_{i=1}^{n} |d_i| \le 1,\\
+1 + \dfrac{\log\left(\sum_{i=1}^{n} |d_i|\right)}{\log n}, & \text{gdy } \sum_{i=1}^{n} |d_i| > 1.
+\end{cases}
 \label{eq:fif_dimension}
 \end{equation}
 
-Dla niejednakowych współczynników $d_1, d_2, \ldots, d_n$ wymiar jest rozwiązaniem:
+W przypadku jednakowych współczynników $|d|$ mamy $\sum |d_i| = n|d|$, więc:
 \begin{equation}
-\sum_{i=1}^{n} |d_i|^D = 1
-\label{eq:fif_dimension_general}
+D = 1 + \frac{\log(n|d|)}{\log n}, \quad \text{dla } n|d| > 1.
+\label{eq:fif_dimension_equal}
 \end{equation}
 
 \subsection{Implementacja i analiza numeryczna}
@@ -114,8 +118,8 @@ Analiza wymiaru numerycznego metodą box-counting wykazała zgodność z teorią
         $d$ & $D$ teoretyczny & $D$ numeryczny & Błąd względny \\
         \midrule
         0.3 & 1.00 & 1.01 & 1\% \\
-        0.5 & 1.00 & 1.07 & 7\% \\
-        0.7 & 1.94 & 1.31 & 32\% \\
+        0.5 & 1.00 & 1.05 & 5\% \\
+        0.7 & 1.49 & 1.31 & 12\% \\
         \bottomrule
     \end{tabular}
     \label{tab:fif_dimensions}
