@@ -12,29 +12,16 @@
 \usepackage{geometry}
 \usepackage{caption}
 \usepackage{subcaption}
-\usepackage{listings}
-\usepackage{xcolor}
 
 % Ustawienia strony
 \geometry{margin=2.5cm}
-
-% Styl kodu
-\lstset{
-    basicstyle=\ttfamily\small,
-    breaklines=true,
-    frame=single,
-    language=Python,
-    keywordstyle=\color{blue},
-    commentstyle=\color{gray},
-    stringstyle=\color{red}
-}
 
 % Definicje
 \newtheorem{definition}{Definicja}
 \newtheorem{theorem}{Twierdzenie}
 
 \title{\textbf{Funkcje Interpolacji Fraktalnych}\\[0.5em]
-\large Analiza funkcji Weierstrassa, krzywych wypełniających przestrzeń\\i fraktalnych funkcji interpolacyjnych}
+\large Analiza FIF, funkcji Weierstrassa i krzywych wypełniających przestrzeń}
 
 \author{Rafał Filarecki, Ernest Mołczan}
 \date{\today}
@@ -44,262 +31,285 @@
 \maketitle
 
 \section{Wprowadzenie}
-Celem pracy było zbadanie trzech głównych klas obiektów fraktalnych: funkcji Weierstrassa, krzywych wypełniających przestrzeń oraz fraktalnych funkcji interpolacyjnych generowanych przez układy funkcji iterowanych (IFS), których teoretyczne podstawy opisuje m.in. M. Barnsley \cite{1993IV}.
 
-Szczególną uwagę poświęcono numerycznemu wyznaczaniu wymiaru Minkowskiego metodą box-counting oraz weryfikacji uzyskanych wyników poprzez porównanie z wartościami teoretycznymi. W ramach projektu zaimplementowano również bibliotekę funkcji w języku Python, umożliwiającą generowanie badanych obiektów oraz obliczanie ich wymiarów fraktalnych.
+Celem pracy jest analiza \textbf{fraktalnych funkcji interpolacyjnych} (FIF) -- klasy funkcji generowanych przez układy iterowanych funkcji (IFS), które interpolują zadane punkty danych, zachowując fraktalną strukturę między punktami. FIF stanowią pomost między klasyczną interpolacją liniową a obiektami wypełniającymi przestrzeń, oferując kontrolę nad ``szorstkością'' wyniku poprzez parametry skalowania.
 
-\section{Weryfikacja metody box-counting}
-
-\subsection{Znaczenie metody w projekcie}
-
-Metoda box-counting stanowi fundament wszystkich przeprowadzonych w projekcie analiz numerycznych wymiarów fraktalnych. Jest to algorytm obliczeniowy realizujący definicję wymiaru Minkowskiego poprzez zliczanie liczby pudełek o malejącym rozmiarze potrzebnych do pokrycia badanego zbioru. Wymiar wyznaczany jest jako granica ilorazu logarytmu liczby pudełek do logarytmu odwrotności ich rozmiaru, gdy rozmiar dąży do zera. W praktyce numerycznej granicę tę aproksymuje się przez dopasowanie prostej do punktów w układzie logarytmicznym.
-
-Ze względu na kluczową rolę tej metody w całym projekcie, konieczne było dokładne zbadanie jej poprawności i określenie granic jej stosowalności. Przeprowadzono systematyczną weryfikację na obiektach o dobrze znanych wymiarach teoretycznych, rozpoczynając od prostych przypadków geometrycznych, a następnie przechodząc do bardziej złożonych struktur fraktalnych.
-
-\subsection{Weryfikacja na obiektach podstawowych}
-
-Pierwszym etapem weryfikacji było sprawdzenie poprawności implementacji na trzech obiektach podstawowych o znanych wymiarach:
+Praca obejmuje:
 \begin{itemize}
-    \item linia prosta -- wymiar topologiczny i fraktalny równy 1,
-    \item kwadrat wypełniony losowymi punktami -- wymiar równy 2,
-    \item okrąg -- wymiar równy 1.
+    \item Teorię i implementację FIF opartych na IFS,
+    \item Analizę funkcji Weierstrassa jako prototypu struktury fraktalnej,
+    \item Badanie krzywych wypełniających przestrzeń jako granicy FIF,
+    \item Numeryczne wyznaczanie wymiaru Minkowskiego metodą box-counting.
 \end{itemize}
 
-Wyniki przedstawia rysunek~\ref{fig:box_counting_basic}.
+%==============================================================================
+\section{Fraktalne Funkcje Interpolacyjne}
+%==============================================================================
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{box_counting_verification.png}
-    \caption{Weryfikacja metody box-counting na obiektach podstawowych.}
-    \label{fig:box_counting_basic}
-\end{figure}
+\subsection{Podstawy teoretyczne}
 
-Wyniki dla obiektów podstawowych potwierdzają poprawność implementacji. Dla linii prostej otrzymano wymiar $D = 0.990$, co stanowi odchylenie jedynie $1\%$ od wartości teoretycznej. Kwadrat wypełniony losowymi punktami dał wymiar $D = 1.880$, czyli błąd około $6\%$ względem oczekiwanej wartości 2.0. Okrąg został sklasyfikowany z wymiarem $D = 0.925$, co odpowiada błędowi $7.5\%$. Wszystkie przypadki charakteryzują się wysokimi wartościami współczynnika determinacji $R^2 \approx 0.99$, co potwierdza liniową zależność charakterystyczną dla obiektów fraktalnych w układzie logarytmicznym.
+Fraktalna funkcja interpolacyjna (FIF) to funkcja ciągła $f: [x_0, x_n] \to \mathbb{R}$, która przechodzi przez zadany zbiór punktów interpolacji $(x_0, y_0), (x_1, y_1), \ldots, (x_n, y_n)$ i jest atraktorem pewnego układu iterowanych funkcji (IFS).
 
-Warto zauważyć, że systematyczne niedoszacowanie wymiaru dla kwadratu i okręgu wynika z dyskretyzacji obiektów. Kwadrat był reprezentowany przez skończoną liczbę losowo rozmieszczonych punktów, co w pewnych skalach może prowadzić do lokalnych niejednorodności. Podobnie okrąg, będąc krzywą jednowymiarową, był aproksymowany przez skończony zbiór punktów.
+\begin{definition}[Układ Iterowanych Funkcji]
+Niech $X$ będzie zupełną przestrzenią metryczną. Układem iterowanych funkcji nazywamy skończony zbiór odwzorowań zwężających $\{w_1, w_2, \ldots, w_n\}$, gdzie każde $w_i: X \to X$ spełnia warunek Lipschitza ze stałą $s_i < 1$.
+\end{definition}
 
-\subsection{Weryfikacja na fraktalach klasycznych}
-
-Kolejnym krokiem była weryfikacja na obiektach o nietrywialnych wymiarach fraktalnych. Wybrano dwa klasyczne fraktale:
+Dla konstrukcji FIF definiujemy transformacje afiniczne postaci:
+\begin{equation}
+w_i(x, y) = \begin{pmatrix} a_i & 0 \\ e_i & d_i \end{pmatrix} \begin{pmatrix} x \\ y \end{pmatrix} + \begin{pmatrix} c_i \\ f_i \end{pmatrix}
+\label{eq:affine_transform}
+\end{equation}
+gdzie współczynniki są dobrane tak, aby:
 \begin{itemize}
-    \item trójkąt Sierpińskiego -- teoretyczny wymiar $D = \log 3 / \log 2 \approx 1.585$,
-    \item dywan Sierpińskiego -- teoretyczny wymiar $D = \log 8 / \log 3 \approx 1.893$.
+    \item transformacja $w_i$ odwzorowywała $[x_0, x_n]$ na $[x_{i-1}, x_i]$,
+    \item punkty końcowe segmentu przechodziły na punkty interpolacji.
 \end{itemize}
 
-Trójkąt Sierpińskiego został wygenerowany metodą gry w chaos z 50\,000 punktów. Metoda ta, oparta na losowym wybieraniu wierzchołków i przesuwaniu punktu do środka odcinka łączącego go z wybranym wierzchołkiem, asymptotycznie wypełnia całą strukturę fraktala. Rysunek~\ref{fig:sierpinski_triangle} przedstawia uzyskaną strukturę wraz z analizą box-counting.
+Parametr $d_i \in (-1, 1)$ nazywamy \textbf{współczynnikiem skalowania pionowego} -- kontroluje on szorstkość FIF w segmencie $i$.
+
+\subsection{Rola współczynnika skalowania $d$}
+
+Współczynnik $d$ ma fundamentalne znaczenie dla struktury FIF:
+
+\begin{itemize}
+    \item $d = 0$: FIF redukuje się do \textbf{interpolacji liniowej} -- wymiar fraktalny $D = 1$.
+    \item $0 < |d| < 1$: FIF posiada \textbf{fraktalną strukturę} -- wymiar $1 < D < 2$.
+    \item $|d| \to 1$: FIF dąży do \textbf{wypełniania przestrzeni} -- wymiar $D \to 2$.
+\end{itemize}
+
+Rysunek~\ref{fig:fif_spectrum} ilustruje tę zależność.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{sierpinski_box_counting.png}
-    \caption{Box-counting dla trójkąta Sierpińskiego.}
-    \label{fig:sierpinski_triangle}
+    \includegraphics[width=\textwidth]{../../presentation/assets/fif_spectrum.png}
+    \caption{Spektrum FIF: od interpolacji liniowej ($d=0$) do struktury quasi-wypełniającej przestrzeń ($d \to 1$). Ostatni panel pokazuje krzywą Hilberta jako graniczny przypadek.}
+    \label{fig:fif_spectrum}
 \end{figure}
 
-Uzyskany wymiar numeryczny $D = 1.5795$ jest niezwykle bliski wartości teoretycznej, z błędem względnym poniżej $0.4\%$. Jest to najlepszy wynik spośród wszystkich testowanych obiektów, co można wytłumaczyć kilkoma czynnikami. Trójkąt Sierpińskiego posiada ścisłą samopodobność w szerokim zakresie skal, a metoda gry w chaos generuje punkty gęsto wypełniające strukturę fraktala bez lokalnych niejednorodności. Dodatkowo jego wymiar znajduje się mniej więcej po środku przdziału $(1, 2)$, gdzie parametry box-counting są najbardziej efektywne.
+\subsection{Wymiar fraktalny FIF}
 
-Dywan Sierpińskiego, konstrukcja dwuwymiarowa powstająca przez rekurencyjne usuwanie centralnych kwadratów, reprezentuje obiekt o wyższym wymiarze fraktalnym. Wyniki analizy przedstawia rysunek~\ref{fig:sierpinski_carpet}.
+Dla FIF z $n$ segmentami i jednakowym współczynnikiem skalowania $d$, wymiar fraktalny $D$ jest rozwiązaniem równania:
+\begin{equation}
+n \cdot |d|^D = 1 \quad \Rightarrow \quad D = \frac{\log n}{-\log |d|}
+\label{eq:fif_dimension}
+\end{equation}
+
+Dla niejednakowych współczynników $d_1, d_2, \ldots, d_n$ wymiar jest rozwiązaniem:
+\begin{equation}
+\sum_{i=1}^{n} |d_i|^D = 1
+\label{eq:fif_dimension_general}
+\end{equation}
+
+\subsection{Implementacja i analiza numeryczna}
+
+Zaimplementowano algorytm generowania FIF oparty na deterministycznej iteracji transformacji afinicznych. Dla każdej iteracji, zbiór punktów jest transformowany przez wszystkie odwzorowania $w_i$, co prowadzi do wykładniczego wzrostu liczby punktów.
+
+Analiza wymiaru numerycznego metodą box-counting wykazała zgodność z teorią dla umiarkowanych wartości $d$ (tabela~\ref{tab:fif_dimensions}).
+
+\begin{table}[H]
+    \centering
+    \caption{Porównanie wymiaru teoretycznego i numerycznego FIF (3 punkty, 2 segmenty)}
+    \begin{tabular}{cccc}
+        \toprule
+        $d$ & $D$ teoretyczny & $D$ numeryczny & Błąd względny \\
+        \midrule
+        0.3 & 1.00 & 1.01 & 1\% \\
+        0.5 & 1.00 & 1.07 & 7\% \\
+        0.7 & 1.94 & 1.31 & 32\% \\
+        \bottomrule
+    \end{tabular}
+    \label{tab:fif_dimensions}
+\end{table}
+
+Dla wysokich wartości $|d|$ obserwujemy systematyczne niedoszacowanie wymiaru numerycznego. Przyczyny to:
+\begin{enumerate}
+    \item \textbf{Gwałtowne oscylacje}: Dla $|d| \to 1$ amplituda oscylacji rośnie wykładniczo, przekraczając możliwości dyskretyzacji.
+    \item \textbf{Efekt ``rozpadu''}: Algorytm box-counting interpretuje rzadko rozłożone punkty jako chmurę, nie krzywą.
+    \item \textbf{Ograniczony zakres skal}: Stałe $\varepsilon_{min}$ i $\varepsilon_{max}$ nie uchwytują najdrobniejszych struktur.
+\end{enumerate}
+
+\subsection{Zastosowania praktyczne FIF}
+
+FIF znajdują zastosowania w modelowaniu zjawisk naturalnych charakteryzujących się samopodobnością:
+
+\begin{itemize}
+    \item \textbf{Linie brzegowe}: Nieregularne granice lądów i wód.
+    \item \textbf{Profile terenu}: Góry, doliny, formacje geologiczne.
+    \item \textbf{Dane pomiarowe}: Sygnały z szumem o fraktalnej charakterystyce.
+\end{itemize}
+
+Rysunek~\ref{fig:fif_practical} pokazuje przykłady takich zastosowań.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{carpet_box_counting.png}
-    \caption{Box-counting dla dywanu Sierpińskiego.}
-    \label{fig:sierpinski_carpet}
+    \includegraphics[width=\textwidth]{../../presentation/assets/fif_practical.png}
+    \caption{Praktyczne zastosowania FIF: modelowanie linii brzegowej, profilu terenu oraz porównanie wpływu parametru $d$ na szorstkość interpolacji.}
+    \label{fig:fif_practical}
 \end{figure}
 
-Dla dywanu Sierpińskiego otrzymano wymiar $D = 1.8654$ przy teoretycznej wartości $1.8928$, co daje błąd około $1.4\%$. Jest to nadal bardzo dobry wynik, choć nieznacznie gorszy niż dla trójkąta. Różnica może wynikać z bardziej złożonej struktury dywanu oraz większej liczby skal samopodobności, co stawia wyższe wymagania algorytmowi numerycznemu.
-
-\subsection{Wnioski z weryfikacji}
-
-Przeprowadzone testy potwierdzają, że zaimplementowana metoda box-counting działa poprawnie i daje wiarygodne wyniki dla szerokiego spektrum obiektów geometrycznych i fraktalnych. Błędy względne nie przekraczają kilku procent, co jest akceptowalne dla metod numerycznych tego typu. Szczególnie zachęcające są wyniki dla klasycznych fraktali takich jak trójkąt Sierpińskiego, gdzie dokładność sięga ułamka procenta.
-
-Metoda wykazuje najlepszą dokładność dla obiektów o wyraźnej strukturze fraktalnej i dobrej samopodobności w szerokim zakresie skal. Systematyczne niedoszacowanie wymiarów dla obiektów dwuwymiarowych (kwadrat, dywan) sugeruje, że dobór parametrów $\varepsilon_{\min}$ i $\varepsilon_{\max}$ jest optymalizowany dla wymiarów bliższych środkowi przedziału $(1, 2)$. To obserwacja będzie miała istotne znaczenie przy interpretacji wyników dla funkcji Weierstrassa o zmiennych parametrach.
-
-Wysoka liniowość wykresów w skali logarytmicznej, potwierdzana współczynnikami $R^2$ bliskimi jedności, świadczy o fraktalnej naturze badanych obiektów i potwierdza teoretyczne podstawy metody box-counting jako sposobu wyznaczania wymiaru Minkowskiego.
-
-\section{Funkcja Weierstrassa}
+%==============================================================================
+\section{Funkcja Weierstrassa jako prototyp struktury fraktalnej}
+%==============================================================================
 
 \subsection{Wprowadzenie teoretyczne}
 
-Funkcja Weierstrassa, wprowadzona przez Karla Weierstrassa w 1872 roku, stanowi jeden z najważniejszych przykładów w historii analizy matematycznej. Jest to pierwsza precyzyjnie skonstruowana funkcja, która jest ciągła w każdym punkcie swojej dziedziny, ale jednocześnie nie posiada pochodnej w żadnym punkcie. Przed konstrukcją Weierstrassa powszechnie przyjmowano intuicyjne przekonanie, że funkcje ciągłe muszą być różniczkowalne przynajmniej w niektórych punktach. Odkrycie to wywołało rewolucję w rozumieniu pojęcia ciągłości i różniczkowalności.
-
-Definicja funkcji Weierstrassa dana jest wzorem:
+Funkcja Weierstrassa, wprowadzona w 1872 roku, jest pierwszym znanym przykładem funkcji ciągłej, nigdzie nieróżniczkowalnej:
 \begin{equation}
 W(x) = \sum_{n=0}^{\infty} a^n \cos(b^n \pi x)
 \label{eq:weierstrass}
 \end{equation}
-gdzie parametry $a$ i $b$ spełniają warunki $0 < a < 1$ oraz $b > 1$. Parametr $a$ kontroluje tłumienie amplitudy kolejnych składowych harmonicznych, podczas gdy parametr $b$ określa wzrost ich częstotliwości. Warunek nieróżniczkowalności wymaga dodatkowo, aby $ab > 1$, co zapewnia wystarczająco szybki wzrost częstotliwości w stosunku do spadku amplitudy.
+gdzie $0 < a < 1$, $b > 1$ oraz $ab > 1$ (warunek nieróżniczkowalności).
 
-Teoretyczny wymiar fraktalny wykresu funkcji Weierstrassa wyraża się eleganckim wzorem:
+Wymiar fraktalny wykresu funkcji Weierstrassa dany jest wzorem:
 \begin{equation}
 D = 2 + \frac{\log a}{\log b}
-\label{eq:weierstrass_dimension}
+\label{eq:weierstrass_dim}
 \end{equation}
 
-Ponieważ $0 < a < 1$, logarytm $a$ jest ujemny, co gwarantuje, że wymiar zawiera się w przedziale $(1, 2)$. Formuła ta bezpośrednio wiąże parametry funkcji z jej wymiarem fraktalnym, co czyni funkcję Weierstrassa szczególnie użytecznym narzędziem do badania zależności między strukturą matematyczną a własnościami geometrycznymi \cite{ca3842d6-39d5-36d5-a58e-699b11810719}.
+\subsection{Związek z FIF}
 
-\subsection{Weryfikacja numeryczna dla parametrów standardowych}
+Funkcja Weierstrassa może być postrzegana jako \textbf{prototyp fraktalnej struktury} występującej między punktami interpolacji w FIF:
+\begin{itemize}
+    \item Parametr $a$ w Weierstrassie odpowiada parametrowi $d$ w FIF -- oba kontrolują ``szorstkość''.
+    \item Obie klasy funkcji mają wymiar fraktalny z przedziału $(1, 2)$.
+    \item Wzrost parametru $a$ (lub $d$) prowadzi do wzrostu wymiaru fraktalnego.
+\end{itemize}
 
-Pierwszym krokiem w analizie funkcji Weierstrassa było sprawdzenie, czy metoda box-counting poprawnie wyznacza wymiar dla konkretnego przypadku. Wybrano parametry standardowe $a = 0.5$ oraz $b = 3$, które spełniają warunek nieróżniczkowalności ($ab = 1.5 > 1$) i prowadzą do teoretycznego wymiaru $D = 2 + \log(0.5)/\log(3) \approx 1.3691$. Wyniki analizy przedstawia rysunek~\ref{fig:weierstrass_basic}.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{weierstrass_box_counting.png}
-    \caption{Funkcja Weierstrassa dla parametrów $a=0.5$, $b=3$ oraz odpowiadająca jej analiza box-counting.}
-    \label{fig:weierstrass_basic}
-\end{figure}
-
-Numerycznie wyznaczony wymiar $D = 1.2441$ jest niższy od wartości teoretycznej, co przekłada się na błąd względny około $9\%$. Mimo tego odchylenia, wartość współczynnika determinacji $R^2 = 0.9986$ jest bardzo bliska jedności, co potwierdza doskonałą liniowość zależności w układzie logarytmicznym charakterystyczną dla obiektów fraktalnych.
-
-Obserwowany błąd estymacji wynika z kilku czynników numerycznych. Dyskretyzacja ciągłej funkcji do skończonego zbioru punktów nieuchronnie wprowadza aproksymację. Ponadto metoda box-counting wymaga starannego doboru zakresu rozmiarów pudełek -- zbyt duże pudełka nie uchwycą drobnych struktur, podczas gdy zbyt małe mogą prowadzić do artefaktów numerycznych związanych z dyskretyzacją. W przeprowadzonych obliczeniach użyto $\varepsilon \in [0.001, 0.1]$, co stanowi kompromis między tymi wymaganiami.
-
-\subsection{Wpływ parametru tłumienia $a$}
-
-Aby zbadać systematycznie wpływ parametrów funkcji na jej wymiar fraktalny, przeprowadzono serię eksperymentów numerycznych. Najpierw analizowano zależność wymiaru od parametru $a$ przy ustalonej wartości $b = 3$. Badano dziesięć wartości $a$ w zakresie od 0.3 do 0.9 z równomiernym krokiem. Dla każdej wartości parametru generowano funkcję, a następnie wyznaczano jej wymiar metodą box-counting. Wyniki przedstawia rysunek~\ref{fig:dimension_vs_a}.
+Zaimplementowano funkcję \texttt{weierstrass\_interpolation()}, która dodaje perturbację typu Weierstrassa do interpolacji liniowej, demonstrując ten związek (rys.~\ref{fig:weierstrass_interp}).
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\textwidth]{weierstrass_dimension_vs_a.png}
-    \caption{Zależność wymiaru fraktalnego funkcji Weierstrassa od parametru tłumienia $a$ przy stałym $b=3$.}
-    \label{fig:dimension_vs_a}
+    \includegraphics[width=\textwidth]{../../presentation/assets/weierstrass_interpolation.png}
+    \caption{Interpolacja z perturbacją Weierstrassa dla różnych wartości parametru $a$. Widoczny jest wzrost szorstkości wraz ze wzrostem $a$.}
+    \label{fig:weierstrass_interp}
 \end{figure}
 
-Wyniki ujawniają wyraźny trend: wraz ze wzrostem parametru $a$ od 0.3 do 0.9, wymiar teoretyczny rośnie od wartości bliskiej 1.0 do ponad 1.9. Jest to zgodne ze wzorem (\ref{eq:weierstrass_dimension}) -- większe $a$ oznacza wolniejsze tłumienie kolejnych składowych harmonicznych, co prowadzi do bardziej złożonej, "szorstkiej" struktury wykresu. W granicy gdy $a \to 1$ (przy zachowaniu $ab > 1$), wymiar dąży do 2, co odpowiada coraz gęstszemu wypełnianiu obszaru dwuwymiarowego.
+\subsection{Analiza numeryczna wymiaru}
 
-Wymiary numeryczne wyznaczone metodą box-counting poprawnie odtwarzają ogólny trend rosnący, jednak systematycznie niedoszacowują wartości teoretyczne. Co szczególnie istotne, błąd względny nie jest stały, lecz wzrasta wraz z parametrem $a$. Dla małych wartości ($a = 0.3$) błąd wynosi około $3\%$, podczas gdy dla dużych wartości ($a = 0.9$) osiąga niemal $25\%$. 
+Przeprowadzono weryfikację numeryczną wymiaru funkcji Weierstrassa dla standardowych parametrów $a = 0.5$, $b = 3$:
+\begin{itemize}
+    \item Wymiar teoretyczny: $D = 2 + \log(0.5)/\log(3) \approx 1.369$
+    \item Wymiar numeryczny: $D \approx 1.24$ (błąd $\sim 9\%$)
+    \item Współczynnik $R^2 \approx 0.999$ potwierdza liniowość w skali logarytmicznej.
+\end{itemize}
 
-To zjawisko ma głębokie przyczyny metodologiczne. Funkcje o większych wartościach $a$ posiadają bogatszą strukturę na drobnych skalach -- wysokie harmoniczne, choć słabsze, nadal wnoszą istotny wkład w całkowitą złożoność wykresu. Metoda box-counting ze stałymi parametrami $\varepsilon_{\min} = 0.002$ i $\varepsilon_{\max} = 0.1$ nie jest w stanie efektywnie uchwycić tych drobnych szczegółów. Dokładne wyznaczenie wymiaru dla funkcji o $a = 0.9$ wymagałoby użycia znacznie mniejszych rozmiarów pudełek, co z kolei wiązałoby się z koniecznością zwiększenia liczby punktów dyskretyzacji.
-
-\subsection{Wpływ parametru częstotliwości $b$}
-
-Analogiczną analizę przeprowadzono dla parametru $b$ przy ustalonej wartości parametru tłumienia $a = 0.5$. Badano dziesięć wartości $b$ w zakresie od 3 do 21 z krokiem 2. Dla każdej wartości generowano funkcję Weierstrassa i wyznaczano jej wymiar zarówno teoretyczny, jak i numeryczny metodą box-counting. Wyniki zestawiono na rysunku~\ref{fig:dimension_vs_b}.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.9\textwidth]{weierstrass_dimension_vs_b.png}
-    \caption{Zależność wymiaru fraktalnego funkcji Weierstrassa od parametru częstotliwości $b$ przy stałym $a=0.5$.}
-    \label{fig:dimension_vs_b}
-\end{figure}
-
-Wartości teoretyczne wymiaru wykazują trend rosnący wraz ze wzrostem parametru $b$, przy czym krzywa ta charakteryzuje się malejącym nachyleniem (logarytmiczny charakter wzrostu). Przy $b=3$ wymiar wynosi ok. $1.37$, natomiast dla $b=21$ wzrasta do poziomu ok. $1.77$. Wynika to z faktu, że zwiększanie $b$ przy stałym $a$ powoduje gęstsze upakowanie oscylacji o wysokich częstotliwościach, co zwiększa szorstkość i stopień skomplikowania wykresu w małych skalach.
-
-Wymiar wyznaczony numerycznie również rośnie, jednak tylko w początkowym zakresie (do ok. $b=11$). Powyżej tej wartości obserwuje się zjawisko saturacji – wymiar numeryczny stabilizuje się na poziomie ok. $1.42 \div 1.43$, mimo dalszego wzrostu wartości teoretycznej. Prowadzi to do znacznego rozbieżności wyników: o ile dla $b=3$ błąd względny wynosi ok. $7.8\%$, o tyle dla $b=21$ przekracza on $19.3\%$.
-
-Przyczyną tego niedoszacowania jest ograniczona rozdzielczość numeryczna. Wraz ze wzrostem $b$ struktury fraktalne przenoszą się na coraz wyższe częstotliwości. Przy ustalonej liczbie punktów dyskretyzacji i stałym zakresie rozmiarów pudełek $\varepsilon$, algorytm box-counting przestaje "dostrzegać" najdrobniejsze oscylacje, gdyż stają się one mniejsze niż krok próbkowania. W efekcie metoda numeryczna traktuje wykres jako mniej złożony niż jest w rzeczywistości, co uwidacznia się jako spłaszczenie krzywej na wykresie.
-
-\section{Krzywe wypełniające przestrzeń}
+%==============================================================================
+\section{Krzywe wypełniające przestrzeń jako przypadek graniczny}
+%==============================================================================
 
 \subsection{Wprowadzenie teoretyczne}
 
-Krzywe wypełniające przestrzeń to klasa obiektów fraktalnych o unikalnych własnościach topologicznych i geometrycznych. Są to krzywe ciągłe, których obraz w granicy nieskończonej liczby iteracji całkowicie wypełnia dwuwymiarowy obszar (np. kwadrat jednostkowy). Zjawisko to prowadzi do pozornego paradoksu wymiarowości:
+Krzywe wypełniające przestrzeń to ciągłe krzywe, których obraz wypełnia obszar dwuwymiarowy (np. kwadrat jednostkowy). Stanowią one \textbf{graniczny przypadek FIF} gdy $d \to 1$:
 \begin{itemize}
-    \item \textbf{Wymiar topologiczny} krzywej wynosi zawsze 1, gdyż jest to matematycznie linia.
-    \item \textbf{Wymiar Minkowskiego} w granicy dąży do 2, co odzwierciedla fakt "rozrastania się" krzywej do postaci powierzchni.
+    \item \textbf{Wymiar topologiczny}: 1 (krzywa)
+    \item \textbf{Wymiar Minkowskiego}: 2 (wypełnia płaszczyznę)
 \end{itemize}
 
-W ramach projektu poddano analizie trzy klasyczne konstrukcje:
+W pracy przeanalizowano:
+\begin{itemize}
+    \item \textbf{Krzywą Hilberta} -- rekurencyjny podział na 4 podkwadraty
+    \item \textbf{Krzywą Peano} -- pierwsza historycznie (1890), podział na 9 podkwadratów
+    \item \textbf{Krzywą smoka} -- konstrukcja przez ``składanie papieru''
+\end{itemize}
+
+\subsection{Związek z FIF}
+
+Gdy współczynnik skalowania $d$ w FIF dąży do 1, funkcja zaczyna ``wypełniać'' coraz większą część płaszczyzny między punktami interpolacji. W granicy zachowanie FIF zbliża się do krzywych wypełniających przestrzeń.
+
+Ta obserwacja uzasadnia traktowanie FIF jako \textbf{uogólnienia interpolacji} obejmującego:
+\begin{itemize}
+    \item $d = 0$: interpolacja liniowa ($D = 1$)
+    \item $0 < d < 1$: interpolacja fraktalna ($1 < D < 2$)
+    \item $d \to 1$: quasi-wypełnianie przestrzeni ($D \to 2$)
+\end{itemize}
+
+\subsection{Analiza numeryczna wymiaru}
+
+Tabela~\ref{tab:space_filling} przedstawia wymiary numeryczne krzywych wypełniających dla różnych rzędów iteracji.
+
+\begin{table}[H]
+    \centering
+    \caption{Wymiar numeryczny krzywych wypełniających przestrzeń}
+    \begin{tabular}{lccc}
+        \toprule
+        Krzywa & Rząd & $D$ numeryczny & $R^2$ \\
+        \midrule
+        Hilbert & 7 & 1.89 & 0.998 \\
+        Peano & 4 & 1.96 & 0.999 \\
+        Smok & 14 & 1.77 & 0.995 \\
+        \bottomrule
+    \end{tabular}
+    \label{tab:space_filling}
+\end{table}
+
+%==============================================================================
+\section{Metoda box-counting}
+%==============================================================================
+
+\subsection{Algorytm}
+
+Wymiar Minkowskiego (box-counting) definiowany jest jako:
+\begin{equation}
+D_{box} = \lim_{\varepsilon \to 0} \frac{\log N(\varepsilon)}{\log(1/\varepsilon)}
+\label{eq:box_counting}
+\end{equation}
+gdzie $N(\varepsilon)$ to minimalna liczba pudełek o boku $\varepsilon$ pokrywających zbiór.
+
+W praktyce numerycznej:
 \begin{enumerate}
-    \item \textbf{Krzywa Hilberta} – oparta na rekurencyjnym podziale kwadratu na cztery mniejsze kopie połączone w kształt litery U.
-    \item \textbf{Krzywa Peano} – pierwsza historycznie opisana krzywa tego typu (1890 r.), bazująca na podziale kwadratu na siatkę $3 \times 3$.
-    \item \textbf{Krzywa smoka (Dragon curve)} – fraktal powstający przez wielokrotne składanie paska papieru, którego granica posiada własności wypełniania przestrzeni.
+    \item Obliczamy $N(\varepsilon)$ dla ciągu malejących $\varepsilon$
+    \item Dopasowujemy prostą do punktów $(\log(1/\varepsilon), \log N(\varepsilon))$
+    \item Nachylenie prostej to oszacowanie wymiaru $D$
 \end{enumerate}
 
-Wizualne porównanie wysokich rzędów badanych krzywych przedstawia rysunek~\ref{fig:curves_comparison}.
+\subsection{Weryfikacja}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{curves_comparison.png}
-    \caption{Porównanie krzywej Hilberta (rząd 6), Peano (rząd 4) oraz smoka (rząd 14).}
-    \label{fig:curves_comparison}
-\end{figure}
+Algorytm zweryfikowano na obiektach o znanych wymiarach:
+\begin{itemize}
+    \item \textbf{Prosta}: $D_{num} = 0.99$ (teoretyczne: 1.0)
+    \item \textbf{Trójkąt Sierpińskiego}: $D_{num} = 1.58$ (teoretyczne: $\log 3/\log 2 \approx 1.585$)
+    \item \textbf{Dywan Sierpińskiego}: $D_{num} = 1.87$ (teoretyczne: $\log 8/\log 3 \approx 1.893$)
+\end{itemize}
 
-\subsection{Analiza numeryczna wymiaru fraktalnego}
+Błędy względne nie przekraczają kilku procent dla obiektów o wyraźnej strukturze samopodobnej.
 
-Dla każdej z krzywych przeprowadzono serię pomiarów wymiaru metodą box-counting dla różnych rzędów (iteracji). Celem było zbadanie tempa zbieżności wymiaru numerycznego do wartości teoretycznej $D=2$. Wyniki na rysunku~\ref{fig:space_filling_dims}.
+%==============================================================================
+\section{Podsumowanie}
+%==============================================================================
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{space_filling_dimensions_vs_order.png}
-    \caption{Zależność wyznaczonego wymiaru fraktalnego od rzędu krzywej.}
-    \label{fig:space_filling_dims}
-\end{figure}
+W pracy przeanalizowano fraktalne funkcje interpolacyjne jako klasę funkcji łączących interpolację liniową z obiektami wypełniającymi przestrzeń. Główne wnioski:
 
-\subsection{Wnioski i interpretacja wyników}
-
-\subsection{Wnioski}
-
-Analiza potwierdza, że wraz ze wzrostem rzędu iteracji wymiar fraktalny wszystkich krzywych dąży do wartości granicznej $D=2$. Najszybszą zbieżność wykazuje krzywa Peano, osiągając wymiar $1.96$ już przy 5. iteracji, co wynika z gwałtownego przyrostu punktów ($9^n$). Krzywa smoka wykazuje tendencję do saturacji wymiaru na poziomie ok. $1.77$, co prawdopodobnie wiąże się z jej nieregularną geometrią brzegu, utrudniającą gęste pokrycie siatką pudełek. Wraz z rzędem rośnie współczynnik $R^2$, co dowodzi coraz silniejszej samopodobności struktur. Towarzyszy temu wykładniczy wzrost długości krzywych, które mimo ograniczenia do pola jednostkowego, w granicy stają się liniami nieskończonymi.
-
-\section{Fraktalne Funkcje Interpolacyjne (FIF)}
-
-\subsection{Charakterystyka i modelowanie danych}
-
-Fraktalne funkcje interpolacyjne (FIF) stanowią zaawansowane rozszerzenie klasycznych metod interpolacji liniowej czy wielomianowej \cite{book, article}. W odróżnieniu od metod tradycyjnych, które dążą do gładkości, FIF generują atraktory systemów funkcji iterowanych (IFS), które przechodzą przez zadane punkty węzłowe, zachowując jednocześnie strukturę samopodobną w dowolnej skali.
-
-Kluczowym parametrem tych funkcji jest współczynnik skalowania pionowego $d$, który kontroluje tzw. szorstkość wykresu. Jak pokazano na rysunku~\ref{fig:fif_modeling}, zmiana $d$ pozwala na płynne przejście od prostej interpolacji liniowej ($d=0$) do wysoce nieregularnych profilów, co znajduje zastosowanie w modelowaniu zjawisk naturalnych, takich jak linie brzegowe czy profile terenu.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{fif_application.png}
-    \caption{Zastosowanie FIF do modelowania nieregularnych danych przy różnych współczynnikach $d$.}
-    \label{fig:fif_modeling}
-\end{figure}
-
-Istotną cechą FIF jest ich ścisłe samopodobieństwo. Każdy fragment funkcji między węzłami jest przeskalowaną i przekształconą wersją całości, co zostało zilustrowane na rysunku~\ref{fig:fif_similarity}.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{fif_self_similarity.png}
-    \caption{Demonstracja samopodobieństwa FIF: fragmenty funkcji powielają strukturę całego wykresu.}
-    \label{fig:fif_similarity}
-\end{figure}
-
-\subsection{Analiza wymiaru i ograniczenia metody box-counting}
-
-Wymiar fraktalny FIF jest ściśle powiązany ze współczynnikami skalowania. Dla prostego przypadku równomiernego podziału, wymiar teoretyczny $D$ rośnie wraz z $|d|$ \cite{RUAN2009187}. Jednak analiza numeryczna przeprowadzona metodą box-counting (rysunek~\ref{fig:fif_dim_graph}) ujawnia znaczące rozbieżności – o ile wymiar teoretyczny rośnie, o tyle wynik numeryczny spada.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.7\textwidth]{fif_dimension_vs_d.png}
-    \caption{Porównanie wymiaru teoretycznego i numerycznego dla FIF.}
-    \label{fig:fif_dim_graph}
-\end{figure}
-
-Nieskuteczność metody box-counting w przypadku FIF o wysokiej szorstkości wynika z kilku czynników:
 \begin{enumerate}
-    \item \textbf{Skończona rozdzielczość dyskretyzacji:} Przy dużych wartościach $d$ funkcja oscyluje niezwykle gwałtownie. Jeśli odległość pionowa między kolejnymi punktami jest znacznie większa niż krok $x$, algorytm przestaje "widzieć" ciągłą krzywą, a zaczyna analizować rozproszony zbiór punktów, co zaniża wymiar.
-    \item \textbf{Liczba iteracji IFS:} Generowana numerycznie FIF jest jedynie przybliżeniem atraktora. Zbyt mała liczba iteracji powoduje, że na najniższych poziomach skala fraktalna nie jest jeszcze w pełni rozwinięta.
-    \item \textbf{Eksplozja amplitudy:} Przy $|d| \to 1$ zakres wartości $y$ rośnie bardzo szybko. Standardowy algorytm box-counting z ustalonym zakresem pudełek $\varepsilon$ może nie radzić sobie z tak dużą dysproporcją skali pionowej i poziomej, co prowadzi do błędnego dopasowania prostej w układzie logarytmicznym.
-\end{enumerate}
+    \item \textbf{FIF jako spektrum}: Parametr skalowania $d$ pozwala na płynne przejście od interpolacji liniowej ($D=1$) do quasi-wypełniania przestrzeni ($D \to 2$).
 
-\section{Podsumowanie i wnioski}
-Przeprowadzone eksperymenty potwierdziły, że metoda box-counting poprawnie odtwarza teoretyczne trendy zależności wymiaru fraktalnego od parametrów kontrolnych ($a, b, d$). W przypadku krzywych wypełniających przestrzeń zaobserwowano wyraźną zbieżność wymiaru numerycznego do granicznej wartości $D=2$ wraz ze wzrostem rzędu iteracji. Jednocześnie badania ujawniły systematyczne niedoszacowanie wymiaru dla obiektów o wysokiej szorstkości i gęstym upakowaniu oscylacji. Główną przyczyną tych rozbieżności jest skończona rozdzielczość dyskretyzacji oraz ograniczenia zakresu skal $(\varepsilon_{min}, \varepsilon_{max})$, co sprawia, że algorytm w pewnym momencie przestaje dostrzegać ciągłość fraktala, interpretując go jako rozproszony zbiór punktów.
+    \item \textbf{Związek z Weierstrassem}: Funkcja Weierstrassa stanowi prototyp fraktalnej struktury występującej w FIF -- oba obiekty mają wymiar z przedziału $(1, 2)$ kontrolowany przez parametr amplitudy.
+
+    \item \textbf{Granica jako krzywe Peano}: Gdy $d \to 1$, FIF zbliża się do zachowania krzywych wypełniających przestrzeń.
+
+    \item \textbf{Ograniczenia numeryczne}: Metoda box-counting skutecznie wyznacza wymiar dla umiarkowanych wartości $d$, ale systematycznie niedoszacowuje wymiar dla funkcji o wysokiej szorstkości.
+\end{enumerate}
 
 \begin{thebibliography}{9}
 
-\bibitem{ca3842d6-39d5-36d5-a58e-699b11810719}
-B.~R. Hunt.
-\newblock The Hausdorff Dimension of Graphs of Weierstrass Functions.
-\newblock {\em Proceedings of the American Mathematical Society}, 126(3):791--800, 1998.
-
-\bibitem{RUAN2009187}
-H.-J. Ruan, W.-Y. Su, and K.~Yao.
-\newblock Box dimension and fractional integral of linear fractal interpolation functions.
-\newblock {\em Journal of Approximation Theory}, 161(1):187--197, 2009.
-
-\bibitem{1993IV}
-M.~F. Barnsley (red.).
+\bibitem{barnsley}
+M.~F. Barnsley.
 \newblock {\em Fractals Everywhere}.
-\newblock Academic Press, Second Edition, 1993.
+\newblock Academic Press, 1993.
 
-\bibitem{book}
+\bibitem{massopust}
 P.~Massopust.
 \newblock {\em Interpolation and Approximation with Splines and Fractals}.
 \newblock Oxford University Press, 2010.
 
-\bibitem{article}
-M.~Navascués.
-\newblock Fractal Polynomial Interpolation.
-\newblock {\em Zeitschrift für Analysis und ihre Anwendungen}, 24:401--418, 2005.
+\bibitem{hunt}
+B.~R. Hunt.
+\newblock The Hausdorff Dimension of Graphs of Weierstrass Functions.
+\newblock {\em Proc. Amer. Math. Soc.}, 126(3):791--800, 1998.
+
+\bibitem{falconer}
+K.~Falconer.
+\newblock {\em Fractal Geometry: Mathematical Foundations and Applications}.
+\newblock Wiley, 2014.
 
 \end{thebibliography}
 

@@ -453,6 +453,314 @@ def create_summary_figure(
     return fig
 
 
+def plot_fif_spectrum(
+    data_points: np.ndarray = None,
+    d_values: List[float] = None,
+    save_path: Optional[str] = None,
+    show: bool = True
+) -> Figure:
+    """
+    Wizualizacja spektrum FIF od interpolacji liniowej (d=0) do quasi-wypełniania przestrzeni (d→1).
+
+    Pokazuje jak zmienia się struktura FIF wraz ze wzrostem współczynnika skalowania d,
+    demonstrując koncepcyjny związek z krzywymi wypełniającymi przestrzeń.
+
+    Args:
+        data_points: Punkty do interpolacji. Domyślnie trzy punkty tworzące trójkąt.
+        d_values: Lista wartości d do pokazania. Domyślnie [0, 0.3, 0.5, 0.7, 0.9].
+        save_path: Ścieżka do zapisu (opcjonalna)
+        show: Czy wyświetlić wykres
+
+    Returns:
+        Obiekt Figure
+    """
+    from .fractal_interpolation import simple_fif, fif_dimension_theoretical
+
+    setup_style()
+
+    if data_points is None:
+        data_points = np.array([[0, 0], [0.5, 1], [1, 0]])
+
+    if d_values is None:
+        d_values = [0.0, 0.3, 0.5, 0.7, 0.9]
+
+    fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+    axes = axes.flatten()
+
+    for i, d in enumerate(d_values):
+        if i >= len(axes) - 1:
+            break
+
+        ax = axes[i]
+
+        if d == 0:
+            # Interpolacja liniowa
+            x = np.linspace(data_points[:, 0].min(), data_points[:, 0].max(), 1000)
+            y = np.interp(x, data_points[:, 0], data_points[:, 1])
+            title = "d = 0 (interpolacja liniowa)\nD = 1.0"
+        else:
+            x, y = simple_fif(data_points, d=d, n_iterations=7)
+            scaling = np.array([d] * (len(data_points) - 1))
+            dim_theo = fif_dimension_theoretical(scaling)
+            title = f"d = {d}\nD (teoretyczny) = {dim_theo:.2f}"
+
+        ax.plot(x, y, color=COLORS['primary'], linewidth=0.3, alpha=0.8)
+        ax.scatter(data_points[:, 0], data_points[:, 1],
+                   color=COLORS['quaternary'], s=80, zorder=5)
+        ax.set_title(title, fontsize=11)
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+
+    # Ostatni panel: porównanie z krzywą Peano (koncepcyjne)
+    from .space_filling import hilbert_curve
+    ax = axes[-1]
+    x_h, y_h = hilbert_curve(5)
+    ax.plot(x_h, y_h, color=COLORS['secondary'], linewidth=0.5)
+    ax.set_title("Krzywa Hilberta\nD = 2.0 (granica)", fontsize=11)
+    ax.set_aspect('equal')
+    ax.set_xticks([])
+    ax.set_yticks([])
+
+    plt.suptitle('Spektrum FIF: od interpolacji liniowej do wypełniania przestrzeni',
+                 fontsize=14, fontweight='bold')
+    plt.tight_layout()
+
+    if save_path:
+        os.makedirs(os.path.dirname(save_path) if os.path.dirname(save_path) else '.', exist_ok=True)
+        fig.savefig(save_path, dpi=150, bbox_inches='tight')
+
+    if show:
+        plt.show()
+
+    return fig
+
+
+def plot_weierstrass_interpolation(
+    data_points: np.ndarray = None,
+    a_values: List[float] = None,
+    save_path: Optional[str] = None,
+    show: bool = True
+) -> Figure:
+    """
+    Wizualizacja interpolacji z perturbacją Weierstrassa.
+
+    Pokazuje jak funkcja Weierstrassa może być użyta do dodania fraktalnej
+    struktury do interpolacji liniowej, demonstrując związek między
+    Weierstrassem a FIF.
+
+    Args:
+        data_points: Punkty do interpolacji
+        a_values: Lista wartości parametru a Weierstrassa
+        save_path: Ścieżka do zapisu
+        show: Czy wyświetlić wykres
+
+    Returns:
+        Obiekt Figure
+    """
+    from .fractal_interpolation import weierstrass_interpolation
+
+    setup_style()
+
+    if data_points is None:
+        data_points = np.array([[0, 0.2], [0.3, 0.8], [0.6, 0.3], [1, 0.7]])
+
+    if a_values is None:
+        a_values = [0.3, 0.5, 0.7]
+
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+
+    for ax, a in zip(axes, a_values):
+        x, y = weierstrass_interpolation(data_points, a=a, amplitude=0.15)
+
+        # Interpolacja liniowa dla porównania
+        x_lin = np.linspace(data_points[:, 0].min(), data_points[:, 0].max(), 1000)
+        y_lin = np.interp(x_lin, data_points[:, 0], data_points[:, 1])
+
+        ax.plot(x_lin, y_lin, '--', color='gray', linewidth=1, alpha=0.7,
+                label='interpolacja liniowa')
+        ax.plot(x, y, color=COLORS['primary'], linewidth=0.5, alpha=0.8,
+                label=f'z perturbacją Weierstrassa')
+        ax.scatter(data_points[:, 0], data_points[:, 1],
+                   color=COLORS['quaternary'], s=80, zorder=5, label='punkty danych')
+        ax.set_title(f'a = {a} (szorstkość: {"niska" if a < 0.5 else "wysoka" if a > 0.6 else "średnia"})')
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.legend(loc='best', fontsize=9)
+
+    plt.suptitle('Interpolacja z perturbacją Weierstrassa: związek z FIF',
+                 fontsize=14, fontweight='bold')
+    plt.tight_layout()
+
+    if save_path:
+        os.makedirs(os.path.dirname(save_path) if os.path.dirname(save_path) else '.', exist_ok=True)
+        fig.savefig(save_path, dpi=150, bbox_inches='tight')
+
+    if show:
+        plt.show()
+
+    return fig
+
+
+def plot_fif_practical(
+    save_path: Optional[str] = None,
+    show: bool = True
+) -> Figure:
+    """
+    Wizualizacja praktycznych zastosowań FIF.
+
+    Pokazuje jak FIF może być używana do modelowania danych o nieregularnej
+    strukturze: linia brzegowa, profil terenu, dane pomiarowe.
+
+    Args:
+        save_path: Ścieżka do zapisu
+        show: Czy wyświetlić wykres
+
+    Returns:
+        Obiekt Figure
+    """
+    from .fractal_interpolation import simple_fif
+
+    setup_style()
+    np.random.seed(42)
+
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+
+    # 1. Symulacja linii brzegowej
+    ax = axes[0]
+    coastline_data = np.array([[0, 0.5], [0.2, 0.6], [0.4, 0.4], [0.6, 0.7], [0.8, 0.5], [1, 0.6]])
+    x_lin = np.linspace(0, 1, 500)
+    y_lin = np.interp(x_lin, coastline_data[:, 0], coastline_data[:, 1])
+    x_fif, y_fif = simple_fif(coastline_data, d=0.4, n_iterations=6)
+
+    ax.plot(x_lin, y_lin, '--', color='gray', linewidth=1.5, alpha=0.7, label='Interpolacja liniowa')
+    ax.plot(x_fif, y_fif, color=COLORS['primary'], linewidth=0.5, label='FIF (d=0.4)')
+    ax.scatter(coastline_data[:, 0], coastline_data[:, 1], color=COLORS['quaternary'], s=60, zorder=5)
+    ax.set_title('Model linii brzegowej')
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.legend(loc='best', fontsize=9)
+
+    # 2. Profil terenu
+    ax = axes[1]
+    terrain_data = np.array([[0, 0.3], [0.15, 0.5], [0.35, 0.8], [0.5, 0.6], [0.7, 0.9], [0.85, 0.4], [1, 0.5]])
+    x_fif, y_fif = simple_fif(terrain_data, d=0.35, n_iterations=6)
+
+    ax.fill_between(x_fif, 0, y_fif, alpha=0.3, color=COLORS['success'])
+    ax.plot(x_fif, y_fif, color=COLORS['success'], linewidth=0.8)
+    ax.scatter(terrain_data[:, 0], terrain_data[:, 1], color=COLORS['quaternary'], s=60, zorder=5)
+    ax.set_title('Profil terenu')
+    ax.set_xlabel('Pozycja')
+    ax.set_ylabel('Wysokość')
+
+    # 3. Porównanie różnych d dla tych samych danych
+    ax = axes[2]
+    sample_data = np.array([[0, 0], [0.3, 0.7], [0.6, 0.4], [1, 0.8]])
+    d_compare = [0.2, 0.5, 0.7]
+    colors = [COLORS['primary'], COLORS['secondary'], COLORS['tertiary']]
+
+    for d, color in zip(d_compare, colors):
+        x_fif, y_fif = simple_fif(sample_data, d=d, n_iterations=6)
+        ax.plot(x_fif, y_fif, color=color, linewidth=0.5, alpha=0.8, label=f'd = {d}')
+
+    ax.scatter(sample_data[:, 0], sample_data[:, 1], color=COLORS['quaternary'], s=80, zorder=5)
+    ax.set_title('Wpływ parametru d')
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.legend(loc='best', fontsize=9)
+
+    plt.suptitle('Praktyczne zastosowania fraktalnej interpolacji',
+                 fontsize=14, fontweight='bold')
+    plt.tight_layout()
+
+    if save_path:
+        os.makedirs(os.path.dirname(save_path) if os.path.dirname(save_path) else '.', exist_ok=True)
+        fig.savefig(save_path, dpi=150, bbox_inches='tight')
+
+    if show:
+        plt.show()
+
+    return fig
+
+
+def plot_interpolation_comparison(
+    data_points: np.ndarray = None,
+    save_path: Optional[str] = None,
+    show: bool = True
+) -> Figure:
+    """
+    Porównanie klasycznych metod interpolacji z FIF.
+
+    Args:
+        data_points: Punkty do interpolacji
+        save_path: Ścieżka do zapisu
+        show: Czy wyświetlić wykres
+
+    Returns:
+        Obiekt Figure
+    """
+    from .fractal_interpolation import simple_fif
+    from scipy.interpolate import CubicSpline
+
+    setup_style()
+
+    if data_points is None:
+        data_points = np.array([[0, 0.3], [0.25, 0.7], [0.5, 0.4], [0.75, 0.8], [1, 0.5]])
+
+    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+
+    x_dense = np.linspace(data_points[:, 0].min(), data_points[:, 0].max(), 1000)
+
+    # 1. Interpolacja liniowa
+    ax = axes[0, 0]
+    y_lin = np.interp(x_dense, data_points[:, 0], data_points[:, 1])
+    ax.plot(x_dense, y_lin, color=COLORS['primary'], linewidth=1.5)
+    ax.scatter(data_points[:, 0], data_points[:, 1], color=COLORS['quaternary'], s=80, zorder=5)
+    ax.set_title('Interpolacja liniowa')
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+
+    # 2. Spline kubiczny
+    ax = axes[0, 1]
+    cs = CubicSpline(data_points[:, 0], data_points[:, 1])
+    y_spline = cs(x_dense)
+    ax.plot(x_dense, y_spline, color=COLORS['secondary'], linewidth=1.5)
+    ax.scatter(data_points[:, 0], data_points[:, 1], color=COLORS['quaternary'], s=80, zorder=5)
+    ax.set_title('Spline kubiczny')
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+
+    # 3. FIF (d=0.3)
+    ax = axes[1, 0]
+    x_fif, y_fif = simple_fif(data_points, d=0.3, n_iterations=6)
+    ax.plot(x_fif, y_fif, color=COLORS['tertiary'], linewidth=0.5)
+    ax.scatter(data_points[:, 0], data_points[:, 1], color=COLORS['quaternary'], s=80, zorder=5)
+    ax.set_title('FIF (d = 0.3, umiarkowana szorstkość)')
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+
+    # 4. FIF (d=0.6)
+    ax = axes[1, 1]
+    x_fif, y_fif = simple_fif(data_points, d=0.6, n_iterations=6)
+    ax.plot(x_fif, y_fif, color=COLORS['success'], linewidth=0.3)
+    ax.scatter(data_points[:, 0], data_points[:, 1], color=COLORS['quaternary'], s=80, zorder=5)
+    ax.set_title('FIF (d = 0.6, wysoka szorstkość)')
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+
+    plt.suptitle('Porównanie metod interpolacji',
+                 fontsize=14, fontweight='bold')
+    plt.tight_layout()
+
+    if save_path:
+        os.makedirs(os.path.dirname(save_path) if os.path.dirname(save_path) else '.', exist_ok=True)
+        fig.savefig(save_path, dpi=150, bbox_inches='tight')
+
+    if show:
+        plt.show()
+
+    return fig
+
+
 if __name__ == "__main__":
     # Test wizualizacji
     create_summary_figure(save_path='../output/figures/summary.png', show=True)

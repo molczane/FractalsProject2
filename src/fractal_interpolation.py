@@ -5,6 +5,12 @@ Fraktalne funkcje interpolacyjne to funkcje generowane przez
 Iterated Function Systems (IFS), które interpolują zadane punkty
 danych i posiadają fraktalną strukturę między punktami.
 
+Moduł zawiera:
+- fractal_interpolation_function: podstawowa implementacja FIF
+- simple_fif: uproszczona wersja z jednakowym współczynnikiem d
+- weierstrass_interpolation: interpolacja z perturbacją Weierstrassa
+- fif_dimension_theoretical: obliczanie wymiaru teoretycznego
+
 Teoria oparta na pracach M.F. Barnsleya.
 """
 
@@ -102,7 +108,6 @@ def fractal_interpolation_function(
             ci = (xi * xn - xi1 * x0) / (xn - x0)
 
             ei = (yi1 - yi) / (xn - x0) - d * (yn - y0) / (xn - x0)
-            fi = (xi1 * y0 - xi * yn) / (xn - x0) - d * (xi1 * y0 - xi * yn) / (xn - x0)
             fi = (xn * yi - x0 * yi1) / (xn - x0) - d * (xn * y0 - x0 * yn) / (xn - x0)
 
             # Maska dla punktów w tym segmencie
@@ -166,23 +171,130 @@ def fif_dimension_theoretical(scaling_factors: np.ndarray) -> float:
         return 1.0
 
 
+def weierstrass_interpolation(
+    data_points: np.ndarray,
+    a: float = 0.5,
+    b: float = 5,
+    amplitude: float = 0.1,
+    n_terms: int = 20,
+    n_output_points: int = 5000
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Interpolacja danych z perturbacją typu Weierstrassa.
+
+    Funkcja pokazuje związek między funkcją Weierstrassa a fraktalnymi
+    funkcjami interpolacyjnymi (FIF). Interpolacja liniowa między punktami
+    danych jest perturbowana funkcją Weierstrassa, tworząc fraktalną
+    strukturę między punktami interpolacji.
+
+    Jest to alternatywne podejście do FIF, gdzie zamiast IFS używamy
+    bezpośrednio funkcji Weierstrassa jako źródła fraktalności.
+
+    Args:
+        data_points: Punkty do interpolacji, shape (N, 2).
+                     Pierwsza kolumna to x, druga to y.
+        a: Współczynnik tłumienia Weierstrassa (0 < a < 1).
+           Większe a = większa szorstkość.
+        b: Współczynnik częstotliwości (b > 1, zazwyczaj nieparzyste).
+        amplitude: Amplituda perturbacji względem zakresu y.
+        n_terms: Liczba wyrazów szeregu Weierstrassa.
+        n_output_points: Liczba punktów wyjściowych.
+
+    Returns:
+        Tuple (x, y) - tablice współrzędnych interpolowanej funkcji
+
+    Example:
+        >>> data = np.array([[0, 0], [0.5, 1], [1, 0.5]])
+        >>> x, y = weierstrass_interpolation(data, a=0.5, amplitude=0.1)
+    """
+    from .weierstrass import weierstrass_function
+
+    data_points = np.asarray(data_points)
+
+    if data_points.ndim != 2 or data_points.shape[1] != 2:
+        raise ValueError(f"data_points musi mieć kształt (N, 2), otrzymano: {data_points.shape}")
+
+    if len(data_points) < 2:
+        raise ValueError("Potrzeba co najmniej 2 punktów do interpolacji")
+
+    # Sortujemy po x
+    sorted_indices = np.argsort(data_points[:, 0])
+    data_points = data_points[sorted_indices]
+
+    x_data = data_points[:, 0]
+    y_data = data_points[:, 1]
+
+    # Generujemy punkty x dla wyjścia
+    x_out = np.linspace(x_data.min(), x_data.max(), n_output_points)
+
+    # Interpolacja liniowa jako baza
+    y_base = np.interp(x_out, x_data, y_data)
+
+    # Skalujemy x do [0, 2] dla funkcji Weierstrassa (typowy zakres)
+    x_scaled = 2 * (x_out - x_out.min()) / (x_out.max() - x_out.min())
+
+    # Obliczamy perturbację Weierstrassa
+    perturbation = weierstrass_function(x_scaled, a=a, b=b, n_terms=n_terms)
+
+    # Normalizujemy perturbację do zakresu [-1, 1]
+    perturbation = perturbation - perturbation.mean()
+    if perturbation.std() > 0:
+        perturbation = perturbation / (2 * perturbation.std())
+
+    # Skalujemy amplitudę względem zakresu y
+    y_range = y_data.max() - y_data.min()
+    if y_range == 0:
+        y_range = 1.0
+
+    # Dodajemy perturbację, ale zerujemy ją w punktach interpolacji
+    # żeby funkcja przechodziła przez zadane punkty
+    y_out = y_base + amplitude * y_range * perturbation
+
+    # Korygujemy wartości w punktach interpolacji
+    for i, (xi, yi) in enumerate(zip(x_data, y_data)):
+        # Znajdujemy najbliższy punkt
+        idx = np.argmin(np.abs(x_out - xi))
+        # Obliczamy lokalną korektę
+        correction = yi - y_out[idx]
+        # Stosujemy wygładzoną korektę w otoczeniu punktu
+        sigma = (x_data.max() - x_data.min()) / (10 * len(x_data))
+        weights = np.exp(-0.5 * ((x_out - xi) / sigma) ** 2)
+        y_out = y_out + correction * weights
+
+    return x_out, y_out
+
+
 def simple_fif(
     data_points: np.ndarray,
     d: float = 0.3,
-    n_iterations: int = 8
+    n_iterations: int = 8,
+    adaptive_iterations: bool = False,
+    densify_output: bool = False
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Uproszczona wersja FIF z jednakowym współczynnikiem skalowania.
 
-    Implementacja oparta na algorytmie chaosu (chaos game).
+    Implementacja oparta na algorytmie deterministycznym.
 
     Args:
         data_points: Punkty do interpolacji, shape (N, 2)
-        d: Współczynnik skalowania (jednakowy dla wszystkich segmentów)
-        n_iterations: Liczba iteracji
+        d: Współczynnik skalowania (jednakowy dla wszystkich segmentów).
+           Wartość z przedziału (-1, 1). Większe |d| = większa szorstkość.
+        n_iterations: Bazowa liczba iteracji
+        adaptive_iterations: Jeśli True, automatycznie zwiększa liczbę
+            iteracji dla wysokich |d| aby zapewnić odpowiednią gęstość
+            punktów do analizy wymiaru fraktalnego.
+        densify_output: Jeśli True, interpoluje między wygenerowanymi
+            punktami aby uzyskać gęstszy wynik (przydatne dla box-counting).
 
     Returns:
         Tuple (x, y) - tablice współrzędnych
+
+    Note:
+        Dla wysokich wartości |d| (> 0.6) wymiar numeryczny może być
+        niedoszacowany przez box-counting ze względu na ograniczenia
+        metody - funkcja oscyluje tak gwałtownie, że algorytm widzi
+        "chmurę punktów" zamiast ciągłej krzywej.
     """
     data_points = np.asarray(data_points)
 
@@ -192,6 +304,18 @@ def simple_fif(
     n = len(data_points)
     if n < 2:
         raise ValueError("Potrzeba co najmniej 2 punktów")
+
+    # Adaptive iterations: więcej iteracji dla wysokich |d|
+    if adaptive_iterations:
+        # Dla d bliskiego 1, potrzebujemy znacznie więcej iteracji
+        # aby uchwycić pełną strukturę fraktalną
+        abs_d = abs(d)
+        if abs_d > 0.8:
+            n_iterations = max(n_iterations, 10)
+        elif abs_d > 0.6:
+            n_iterations = max(n_iterations, 9)
+        elif abs_d > 0.4:
+            n_iterations = max(n_iterations, 8)
 
     # Sortujemy po x
     sorted_indices = np.argsort(data_points[:, 0])
@@ -217,11 +341,6 @@ def simple_fif(
 
         transforms.append((a, c, d, e, f))
 
-    # Generujemy punkty metodą deterministyczną
-    n_points = 4 ** n_iterations
-    all_x = [x0]
-    all_y = [y0]
-
     # Iteracyjnie generujemy punkty
     current_points = [(x0, y0)]
 
@@ -239,6 +358,14 @@ def simple_fif(
 
     x = np.array([p[0] for p in current_points])
     y = np.array([p[1] for p in current_points])
+
+    # Densify output: interpolacja między punktami dla gęstszego wyniku
+    if densify_output and len(x) > 1:
+        # Tworzymy gęstszą siatkę punktów przez interpolację
+        n_dense = max(10000, len(x) * 2)
+        x_dense = np.linspace(x.min(), x.max(), n_dense)
+        y_dense = np.interp(x_dense, x, y)
+        return x_dense, y_dense
 
     return x, y
 
